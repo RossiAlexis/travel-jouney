@@ -1,8 +1,7 @@
-import type { Route } from "./+types/entry-detail";
 import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Entry Details - Travel Journal" },
     { name: "description", content: "View your journal entry" },
@@ -27,4 +26,3 @@ export default function EntryDetail() {
     </div>
   );
 }
-

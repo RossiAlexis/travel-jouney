@@ -78,7 +78,11 @@ export async function createUserSession(
   session.set("userId", userId);
 
   // Create session record in database
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  // TODO: Add a remember me option to the login form
+  // If remember me is checked, set the expiresAt to 30 days
+  // If remember me is not checked, set the expiresAt to 3 hours
+  // For now, we will set the expiresAt to 3 hours
+  const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
   await db.session.create({
     data: {
       userId,

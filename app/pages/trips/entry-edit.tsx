@@ -1,8 +1,7 @@
-import type { Route } from "./+types/entry-edit";
 import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Edit Entry - Travel Journal" },
     { name: "description", content: "Edit your journal entry" },
@@ -29,4 +28,3 @@ export default function EntryEdit() {
     </div>
   );
 }
-

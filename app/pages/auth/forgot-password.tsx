@@ -18,7 +18,7 @@ import {
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { MapPin, CheckCircle } from "lucide-react";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Forgot Password - Travel Journal" },
     { name: "description", content: "Reset your Travel Journal password" },
@@ -30,7 +30,10 @@ export async function action({ request }: Route.ActionArgs) {
   const submission = parseWithZod(formData, { schema: forgotPasswordSchema });
 
   if (submission.status !== "success") {
-    return data({ submission: submission.reply(), success: false }, { status: 400 });
+    return data(
+      { submission: submission.reply(), success: false },
+      { status: 400 }
+    );
   }
 
   // TODO: Implement password reset email sending
@@ -40,8 +43,7 @@ export async function action({ request }: Route.ActionArgs) {
   return data({ submission: submission.reply(), success: true });
 }
 
-export default function ForgotPassword() {
-  const actionData = useActionData<typeof action>();
+export default function ForgotPassword({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
@@ -55,11 +57,11 @@ export default function ForgotPassword() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted px-4">
+    <div className="from-background to-muted flex min-h-screen items-center justify-center bg-gradient-to-b px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <Link to="/" className="mb-4 flex justify-center">
-            <MapPin className="h-10 w-10 text-primary" />
+            <MapPin className="text-primary h-10 w-10" />
           </Link>
           <CardTitle className="text-2xl">Forgot password?</CardTitle>
           <CardDescription>
@@ -95,14 +97,18 @@ export default function ForgotPassword() {
                   {fields.email.errors && (
                     <p
                       id={fields.email.errorId}
-                      className="text-sm text-destructive"
+                      className="text-destructive text-sm"
                     >
                       {fields.email.errors}
                     </p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Sending..." : "Send reset link"}
                 </Button>
               </div>
@@ -110,7 +116,7 @@ export default function ForgotPassword() {
           )}
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Remember your password?{" "}
             <Link to="/login" className="text-primary hover:underline">
               Sign in
@@ -121,4 +127,3 @@ export default function ForgotPassword() {
     </div>
   );
 }
-

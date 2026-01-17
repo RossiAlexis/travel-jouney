@@ -18,10 +18,13 @@ import {
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { MapPin, AlertCircle } from "lucide-react";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Reset Password - Travel Journal" },
-    { name: "description", content: "Set a new password for your Travel Journal account" },
+    {
+      name: "description",
+      content: "Set a new password for your Travel Journal account",
+    },
   ];
 }
 
@@ -43,7 +46,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   const submission = parseWithZod(formData, { schema: resetPasswordSchema });
 
   if (submission.status !== "success") {
-    return data({ submission: submission.reply(), error: null }, { status: 400 });
+    return data(
+      { submission: submission.reply(), error: null },
+      { status: 400 }
+    );
   }
 
   // TODO: Implement password reset
@@ -79,11 +85,11 @@ export default function ResetPassword() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted px-4">
+    <div className="from-background to-muted flex min-h-screen items-center justify-center bg-gradient-to-b px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <Link to="/" className="mb-4 flex justify-center">
-            <MapPin className="h-10 w-10 text-primary" />
+            <MapPin className="text-primary h-10 w-10" />
           </Link>
           <CardTitle className="text-2xl">Reset password</CardTitle>
           <CardDescription>Enter your new password below</CardDescription>
@@ -114,7 +120,7 @@ export default function ResetPassword() {
                 {fields.password.errors && (
                   <p
                     id={fields.password.errorId}
-                    className="text-sm text-destructive"
+                    className="text-destructive text-sm"
                   >
                     {fields.password.errors}
                   </p>
@@ -141,7 +147,7 @@ export default function ResetPassword() {
                 {fields.confirmPassword.errors && (
                   <p
                     id={fields.confirmPassword.errorId}
-                    className="text-sm text-destructive"
+                    className="text-destructive text-sm"
                   >
                     {fields.confirmPassword.errors}
                   </p>
@@ -155,7 +161,7 @@ export default function ResetPassword() {
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Remember your password?{" "}
             <Link to="/login" className="text-primary hover:underline">
               Sign in
@@ -166,4 +172,3 @@ export default function ResetPassword() {
     </div>
   );
 }
-

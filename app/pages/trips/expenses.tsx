@@ -1,8 +1,7 @@
-import type { Route } from "./+types/expenses";
 import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Expenses - Travel Journal" },
     { name: "description", content: "Track your trip expenses" },
@@ -28,4 +27,3 @@ export default function Expenses() {
     </div>
   );
 }
-

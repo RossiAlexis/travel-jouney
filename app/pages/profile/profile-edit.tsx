@@ -1,8 +1,7 @@
-import type { Route } from "./+types/profile-edit";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Edit Profile - Travel Journal" },
     { name: "description", content: "Edit your profile settings" },
@@ -32,4 +31,3 @@ export default function ProfileEdit() {
     </div>
   );
 }
-

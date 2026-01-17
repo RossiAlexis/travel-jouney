@@ -1,5 +1,4 @@
-import { Link } from "react-router";
-import { data } from "react-router";
+import { Link, data } from "react-router";
 import type { Route } from "./+types/dashboard";
 import { requireAuth } from "~/lib/auth.server";
 import { db } from "~/lib/db.server";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Plus, MapPin, Calendar, BookOpen } from "lucide-react";
 import type { TripStatus } from "~/types";
-
+import z from "zod";
 export function meta() {
   return [
     { title: "Dashboard - Travel Journal" },
@@ -16,23 +15,57 @@ export function meta() {
   ];
 }
 
+const tripsSchema = z
+  .array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      description: z.string(),
+      coverImage: z.string().nullable(),
+      startDate: z.date(),
+      endDate: z.date().optional(),
+      status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]),
+      _count: z.object({
+        entries: z.number(),
+      }),
+    })
+  )
+  .transform((data) => {
+    return data.map((trip) => {
+      return {
+        id: trip.id,
+        title: trip.title,
+        description: trip.description,
+        coverImage: trip.coverImage,
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        status: trip.status,
+        entries: trip._count.entries,
+      };
+    });
+  });
+
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireAuth(request);
-  console.log("user from dashboard", user);
-  const trips = await db.trip.findMany({
+  const unparsedTrips = await db.trip.findMany({
     where: { userId: user.id },
     orderBy: [{ status: "asc" }, { startDate: "desc" }],
     include: {
       _count: {
         select: {
           entries: true,
-          expenses: true,
         },
       },
     },
   });
 
-  return data({ user, trips });
+  const trips = tripsSchema.safeParse(unparsedTrips);
+  if (!trips.success) {
+    console.error("Error parsing trips", trips.error);
+    throw new Error("Error parsing trips");
+  }
+
+  return data({ user, trips: trips.data });
 }
 
 const statusColors: Record<TripStatus, string> = {
@@ -49,8 +82,6 @@ const statusLabels: Record<TripStatus, string> = {
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const { user, trips } = loaderData;
-
-  console.log("trips from dashboard", trips);
 
   const ongoingTrips = trips.filter((t) => t.status === "ONGOING");
   const plannedTrips = trips.filter((t) => t.status === "PLANNED");
@@ -143,12 +174,9 @@ interface TripCardProps {
     description: string | null;
     coverImage: string | null;
     startDate: Date | string;
-    endDate: Date | string | null;
+    endDate: Date | string | undefined;
     status: TripStatus;
-    _count: {
-      entries: number;
-      expenses: number;
-    };
+    entries: number;
   };
 }
 
@@ -209,8 +237,7 @@ function TripCard({ trip }: TripCardProps) {
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
               <span>
-                {trip._count.entries} entr
-                {trip._count.entries === 1 ? "y" : "ies"}
+                {trip.entries} entry{trip.entries === 1 ? "" : "s"}
               </span>
             </div>
           </div>

@@ -10,4 +10,3 @@ export async function loader() {
 export async function action({ request }: Route.ActionArgs) {
   return logout(request);
 }
-

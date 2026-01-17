@@ -62,8 +62,7 @@ export async function action({ request }: Route.ActionArgs) {
   return createUserSession(result.user.id, "/dashboard");
 }
 
-export default function Login() {
-  const actionData = useActionData<typeof action>();
+export default function Login({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 

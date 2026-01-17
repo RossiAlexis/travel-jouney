@@ -19,7 +19,7 @@ import {
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { MapPin, AlertCircle } from "lucide-react";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Sign Up - Travel Journal" },
     { name: "description", content: "Create your Travel Journal account" },
@@ -40,7 +40,10 @@ export async function action({ request }: Route.ActionArgs) {
   const submission = parseWithZod(formData, { schema: registerSchema });
 
   if (submission.status !== "success") {
-    return data({ submission: submission.reply(), error: null }, { status: 400 });
+    return data(
+      { submission: submission.reply(), error: null },
+      { status: 400 }
+    );
   }
 
   const result = await registerUser({
@@ -60,8 +63,7 @@ export async function action({ request }: Route.ActionArgs) {
   return createUserSession(result.user.id, "/dashboard");
 }
 
-export default function Register() {
-  const actionData = useActionData<typeof action>();
+export default function Register({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
@@ -75,11 +77,11 @@ export default function Register() {
   });
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-muted px-4 py-8">
+    <div className="from-background to-muted flex min-h-screen items-center justify-center bg-linear-to-b px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <Link to="/" className="mb-4 flex justify-center">
-            <MapPin className="h-10 w-10 text-primary" />
+            <MapPin className="text-primary h-10 w-10" />
           </Link>
           <CardTitle className="text-2xl">Create an account</CardTitle>
           <CardDescription>
@@ -113,7 +115,7 @@ export default function Register() {
                 {fields.email.errors && (
                   <p
                     id={fields.email.errorId}
-                    className="text-sm text-destructive"
+                    className="text-destructive text-sm"
                   >
                     {fields.email.errors}
                   </p>
@@ -137,7 +139,7 @@ export default function Register() {
                 {fields.username.errors && (
                   <p
                     id={fields.username.errorId}
-                    className="text-sm text-destructive"
+                    className="text-destructive text-sm"
                   >
                     {fields.username.errors}
                   </p>
@@ -163,7 +165,7 @@ export default function Register() {
                 {fields.displayName.errors && (
                   <p
                     id={fields.displayName.errorId}
-                    className="text-sm text-destructive"
+                    className="text-destructive text-sm"
                   >
                     {fields.displayName.errors}
                   </p>
@@ -186,7 +188,7 @@ export default function Register() {
                 {fields.password.errors && (
                   <p
                     id={fields.password.errorId}
-                    className="text-sm text-destructive"
+                    className="text-destructive text-sm"
                   >
                     {fields.password.errors}
                   </p>
@@ -213,7 +215,7 @@ export default function Register() {
                 {fields.confirmPassword.errors && (
                   <p
                     id={fields.confirmPassword.errorId}
-                    className="text-sm text-destructive"
+                    className="text-destructive text-sm"
                   >
                     {fields.confirmPassword.errors}
                   </p>
@@ -231,7 +233,7 @@ export default function Register() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
+              <span className="bg-card text-muted-foreground px-2">
                 Or continue with
               </span>
             </div>
@@ -262,7 +264,7 @@ export default function Register() {
           </Button>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Already have an account?{" "}
             <Link to="/login" className="text-primary hover:underline">
               Sign in
@@ -273,4 +275,3 @@ export default function Register() {
     </div>
   );
 }
-
