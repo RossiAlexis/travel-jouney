@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
+import * as pg from "pg";
 
 // Singleton pattern to avoid multiple instances in development
 declare global {
@@ -8,9 +9,18 @@ declare global {
 }
 
 function createPrismaClient() {
-  const adapter = new PrismaBetterSqlite3({
-    url: process.env.DATABASE_URL || "file:./prisma/dev.db",
+  // Use connection pooling for serverless environments
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+
+  const pool = new pg.Pool({
+    connectionString,
   });
+
+  const adapter = new PrismaPg(pool);
 
   const client = new PrismaClient({
     adapter,
@@ -19,6 +29,7 @@ function createPrismaClient() {
         ? ["query", "error", "warn"]
         : ["error"],
   });
+
   return client;
 }
 

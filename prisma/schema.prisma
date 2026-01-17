@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 // ============================================
@@ -14,32 +14,32 @@ datasource db {
 // ============================================
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String?   // Optional for OAuth-only users
-  username     String    @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String? // Optional for OAuth-only users
+  username     String   @unique
   displayName  String
   avatar       String?
   bio          String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  accounts     Account[]
-  sessions     Session[]
-  trips        Trip[]
-  entries      Entry[]
-  expenses     Expense[]
+  accounts Account[]
+  sessions Session[]
+  trips    Trip[]
+  entries  Entry[]
+  expenses Expense[]
 
   @@index([email])
   @@index([username])
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   userId            String
-  provider          String  // "credentials" | "google"
-  providerAccountId String  // External provider's user ID
+  provider          String // "credentials" | "google"
+  providerAccountId String // External provider's user ID
   createdAt         DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -115,15 +115,15 @@ model Entry {
   tripId          String
   userId          String
   title           String
-  content         String        // Rich text content (HTML/JSON from Tiptap)
+  content         String // Rich text content (HTML/JSON from Tiptap)
   date            DateTime
   locationName    String?
   locationAddress String?
   latitude        Float?
   longitude       Float?
-  placeId         String?       // For mapping services
+  placeId         String? // For mapping services
   category        EntryCategory @default(OTHER)
-  rating          Int?          // 1-5 stars
+  rating          Int? // 1-5 stars
   isPublic        Boolean       @default(false)
   slug            String?
   createdAt       DateTime      @default(now())
@@ -177,8 +177,8 @@ model Expense {
   id          String          @id @default(cuid())
   tripId      String
   userId      String
-  entryId     String?         // Optional link to related entry
-  amount      Float           // Store in original currency
+  entryId     String? // Optional link to related entry
+  amount      Float // Store in original currency
   currency    String
   category    ExpenseCategory
   description String

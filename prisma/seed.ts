@@ -1,17 +1,54 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
+import * as pg from "pg";
+import * as bcrypt from "bcryptjs";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL || "file:./dev.db",
-});
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
 
+if (!connectionString) {
+  throw new Error("DATABASE_URL or DIRECT_URL environment variable is not set");
+}
+
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const USER_ID = "cmkdf4p3a0000sm90nid8odvs";
+// Test user credentials
+const TEST_USER = {
+  email: "test@user.com",
+  username: "testuser",
+  displayName: "Test User",
+  password: "Password123!", // Meets password requirements: 8+ chars, uppercase, lowercase, number
+};
 
 async function main() {
   console.log("🌱 Starting database seed...");
+
+  // Hash the password
+  const passwordHash = await bcrypt.hash(TEST_USER.password, 12);
+
+  // Create or update the test user
+  const user = await prisma.user.upsert({
+    where: { email: TEST_USER.email },
+    update: {},
+    create: {
+      email: TEST_USER.email,
+      username: TEST_USER.username,
+      displayName: TEST_USER.displayName,
+      passwordHash,
+      bio: "A passionate traveler exploring the world one destination at a time.",
+      accounts: {
+        create: {
+          provider: "credentials",
+          providerAccountId: TEST_USER.email,
+        },
+      },
+    },
+  });
+
+  console.log(`✓ Created test user: ${TEST_USER.email}`);
+  console.log(`  Password: ${TEST_USER.password}`);
 
   // Create trips with entries and expenses
   const trips = [
@@ -27,7 +64,8 @@ async function main() {
       slug: "japan-adventure-2024",
       budget: 5000,
       currency: "USD",
-      coverImage: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
+      coverImage:
+        "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
       entries: [
         {
           id: "entry_tokyo_arrival",
@@ -116,7 +154,8 @@ async function main() {
       slug: "iceland-ring-road",
       budget: 4000,
       currency: "USD",
-      coverImage: "https://images.unsplash.com/photo-1504893524553-b855bce32c67",
+      coverImage:
+        "https://images.unsplash.com/photo-1504893524553-b855bce32c67",
       entries: [
         {
           id: "entry_reykjavik",
@@ -214,13 +253,13 @@ async function main() {
   for (const tripData of trips) {
     const { entries, expenses, ...trip } = tripData;
 
-    // Create trip
+    // Create trip linked to the test user
     await prisma.trip.upsert({
       where: { id: trip.id },
       update: {},
       create: {
         ...trip,
-        userId: USER_ID,
+        userId: user.id,
       },
     });
 
@@ -234,7 +273,7 @@ async function main() {
         create: {
           ...entry,
           tripId: trip.id,
-          userId: USER_ID,
+          userId: user.id,
         },
       });
     }
@@ -251,7 +290,7 @@ async function main() {
         create: {
           ...expense,
           tripId: trip.id,
-          userId: USER_ID,
+          userId: user.id,
         },
       });
     }
@@ -262,6 +301,9 @@ async function main() {
   }
 
   console.log("\n✅ Database seeded successfully!");
+  console.log("\n📝 Login credentials:");
+  console.log(`   Email: ${TEST_USER.email}`);
+  console.log(`   Password: ${TEST_USER.password}`);
 }
 
 main()
@@ -272,4 +314,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

@@ -18,12 +18,13 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.2.0",
+    "pg": "^8.13.0",
     "@base-ui/react": "^1.0.0",
     "@conform-to/react": "^1.15.1",
     "@conform-to/zod": "^1.15.1",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
-    "@prisma/adapter-better-sqlite3": "^7.2.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -54,6 +55,7 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.6",
     "@prisma/client": "^7.2.0",
     "@react-router/dev": "7.12.0",
     "@tailwindcss/vite": "^4.1.13",

@@ -9,6 +9,8 @@ export default defineConfig({
     seed: "npx tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"] || "file:./dev.db",
+    // Use DIRECT_URL for migrations (bypasses connection pooler)
+    // Use DATABASE_URL for regular operations (uses connection pooler)
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 });
