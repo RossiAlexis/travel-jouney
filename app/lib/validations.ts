@@ -100,10 +100,10 @@ export const tripSchemaWithDates = tripSchema.refine(
 );
 
 // ============================================
-// ENTRY SCHEMAS
+// MEMORY SCHEMAS
 // ============================================
 
-export const entrySchema = z.object({
+export const memorySchema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
@@ -149,7 +149,7 @@ export const expenseSchema = z.object({
   date: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Please enter a valid date",
   }),
-  entryId: z.string().optional(),
+  memoryId: z.string().optional(),
 });
 
 // ============================================
@@ -173,6 +173,6 @@ export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type TripFormData = z.infer<typeof tripSchema>;
-export type EntryFormData = z.infer<typeof entrySchema>;
+export type MemoryFormData = z.infer<typeof memorySchema>;
 export type ExpenseFormData = z.infer<typeof expenseSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;

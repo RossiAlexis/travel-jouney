@@ -1,0 +1,38 @@
+[
+  {
+    "code": "MOCK_CODE_GITHUB_KODY",
+    "accessToken": "MOCK_CODE_GITHUB_KODY_mock_access_token",
+    "profile": {
+      "login": "Vicenta87",
+      "id": 1896959115391893,
+      "name": "Vincent Hand",
+      "avatar_url": "https://github.com/ghost.png",
+      "emails": [
+        "Ila90@yahoo.com",
+        "Saul.Zboncak@hotmail.com",
+        "Talia96@hotmail.com"
+      ]
+    },
+    "emails": [
+      {
+        "email": "Ila90@yahoo.com",
+        "verified": false,
+        "primary": false,
+        "visibility": "public"
+      },
+      {
+        "email": "Saul.Zboncak@hotmail.com",
+        "verified": true,
+        "primary": false,
+        "visibility": null
+      },
+      {
+        "email": "Talia96@hotmail.com",
+        "verified": true,
+        "primary": true,
+        "visibility": null
+      }
+    ],
+    "primaryEmail": "Talia96@hotmail.com"
+  }
+]

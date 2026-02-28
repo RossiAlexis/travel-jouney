@@ -22,11 +22,11 @@ const tripsSchema = z
       title: z.string(),
       description: z.string(),
       coverImage: z.string().nullable(),
-      startDate: z.date(),
-      endDate: z.date().optional(),
+      startDate: z.date().optional().nullable(),
+      endDate: z.date().optional().nullable(),
       status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]),
       _count: z.object({
-        entries: z.number(),
+        memories: z.number(),
       }),
     })
   )
@@ -40,7 +40,7 @@ const tripsSchema = z
         startDate: trip.startDate,
         endDate: trip.endDate,
         status: trip.status,
-        entries: trip._count.entries,
+        memories: trip._count.memories,
       };
     });
   });
@@ -53,7 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     include: {
       _count: {
         select: {
-          entries: true,
+          memories: true,
         },
       },
     },
@@ -176,7 +176,7 @@ interface TripCardProps {
     startDate: Date | string;
     endDate: Date | string | undefined;
     status: TripStatus;
-    entries: number;
+    memories: number;
   };
 }
 
@@ -237,7 +237,8 @@ function TripCard({ trip }: TripCardProps) {
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
               <span>
-                {trip.entries} entry{trip.entries === 1 ? "" : "s"}
+                {trip.memories}{" "}
+                {trip.memories === 1 ? "memory" : "memories"}
               </span>
             </div>
           </div>

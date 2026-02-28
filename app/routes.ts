@@ -34,17 +34,17 @@ export default [
     route("trips/:tripId", "pages/trips/trip-detail.tsx"),
     route("trips/:tripId/edit", "pages/trips/trip-edit.tsx"),
 
-    // Entry routes (nested under trips)
-    route("trips/:tripId/entries/new", "pages/trips/entry-new.tsx"),
-    route("trips/:tripId/entries/:entryId", "pages/trips/entry-detail.tsx"),
-    route("trips/:tripId/entries/:entryId/edit", "pages/trips/entry-edit.tsx"),
+    // Memory routes (nested under trips)
+    route("trips/:tripId/memories/new", "pages/trips/memory-new.tsx"),
+    route("trips/:tripId/memories/:memoryId", "pages/trips/memory-detail.tsx"),
+    route("trips/:tripId/memories/:memoryId/edit", "pages/trips/memory-edit.tsx"),
 
     // Expenses view
     route("trips/:tripId/expenses", "pages/trips/expenses.tsx"),
   ]),
 
-  // Public profile and trip views (Phase 2)
-  // route(":username", "pages/public/user-profile.tsx"),
-  // route(":username/:tripSlug", "pages/public/trip-public.tsx"),
-  // route(":username/:tripSlug/:entrySlug", "pages/public/entry-public.tsx"),
+  // Public profile and trip views
+  route(":username", "pages/public/user-profile.tsx"),
+  route(":username/:tripSlug", "pages/public/trip-public.tsx"),
+  route(":username/:tripSlug/:memorySlug", "pages/public/memory-public.tsx"),
 ] satisfies RouteConfig;

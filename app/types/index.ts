@@ -4,11 +4,11 @@ export type {
   Account,
   Session,
   Trip,
-  Entry,
+  Memory,
   Photo,
   Expense,
   TripStatus,
-  EntryCategory,
+  MemoryCategory,
   ExpenseCategory,
 } from "@prisma/client";
 
@@ -23,24 +23,24 @@ export interface SessionUser {
 
 export interface TripWithCounts extends Trip {
   _count: {
-    entries: number;
+    memories: number;
     expenses: number;
   };
 }
 
-export interface EntryWithPhotos extends Entry {
+export interface MemoryWithPhotos extends Memory {
   photos: Photo[];
 }
 
-export interface TripWithEntries extends Trip {
-  entries: EntryWithPhotos[];
+export interface TripWithMemories extends Trip {
+  memories: MemoryWithPhotos[];
 }
 
 export interface TripWithAll extends Trip {
-  entries: EntryWithPhotos[];
+  memories: MemoryWithPhotos[];
   expenses: Expense[];
   _count: {
-    entries: number;
+    memories: number;
     expenses: number;
   };
 }
@@ -54,5 +54,4 @@ export interface ActionResult<T = unknown> {
 }
 
 // Import the actual types to re-export
-import type { Trip, Entry, Photo, Expense } from "@prisma/client";
-
+import type { Trip, Memory, Photo, Expense } from "@prisma/client";

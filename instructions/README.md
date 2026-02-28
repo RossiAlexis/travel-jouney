@@ -59,7 +59,15 @@ This project documentation is organized into the following files:
    - Visualization (timeline, map, gallery)
    - Success criteria
 
-5. **[03-MCP-INTEGRATION.md](./03-MCP-INTEGRATION.md)**
+5. **[03-PUBLIC-SHARING-FEATURES.md](./03-PUBLIC-SHARING-FEATURES.md)**
+   - Public/private trip sharing
+   - Public profile pages
+   - Privacy controls (trip-level and entry-level)
+   - Discovery features
+   - SEO considerations
+   - Analytics for content creators
+
+6. **[04-MCP-INTEGRATION.md](./04-MCP-INTEGRATION.md)**
    - Model Context Protocol server implementation
    - AI-assisted journaling use cases
    - MCP tools specification (create_entry, search_entries, etc.)
@@ -67,13 +75,7 @@ This project documentation is organized into the following files:
    - Implementation phases
    - Usage examples
 
-6. **[04-PUBLIC-SHARING-FEATURES.md](./04-PUBLIC-SHARING-FEATURES.md)**
-   - Public/private trip sharing
-   - Public profile pages
-   - Privacy controls (trip-level and entry-level)
-   - Discovery features
-   - SEO considerations
-   - Analytics for content creators
+
 
 ### Development Guides
 

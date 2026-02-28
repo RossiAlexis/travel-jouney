@@ -24,7 +24,8 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { Separator } from "~/components/ui/separator";
+import { ArrowLeft, AlertCircle, Globe, Lock } from "lucide-react";
 import { z } from "zod";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -49,7 +50,28 @@ const tripLoaderSchema = z.object({
   status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]),
   budget: z.number().nullable(),
   currency: z.string(),
+  isPublic: z.boolean(),
+  slug: z.string().nullable(),
 });
+
+async function generateUniqueTripSlug(
+  userId: string,
+  title: string
+): Promise<string> {
+  const base = title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
+  let slug = base;
+  let counter = 1;
+  while (await db.trip.findFirst({ where: { userId, slug } })) {
+    slug = `${base}-${counter++}`;
+  }
+  return slug;
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
@@ -69,6 +91,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       status: true,
       budget: true,
       currency: true,
+      isPublic: true,
+      slug: true,
     },
   });
 
@@ -89,6 +113,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   const user = await requireAuth(request);
   const { tripId } = params;
   const formData = await request.formData();
+
+  // Extract isPublic before Conform parsing (it's a checkbox)
+  const isPublic = formData.get("isPublic") === "on";
+
   const submission = parseWithZod(formData, { schema: tripSchemaWithDates });
 
   if (submission.status !== "success") {
@@ -107,6 +135,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw new Response("Trip not found", { status: 404 });
   }
 
+  // Generate slug if making public for the first time
+  let slug = existingTrip.slug;
+  if (isPublic && !slug) {
+    slug = await generateUniqueTripSlug(user.id, submission.value.title);
+  }
+
   try {
     await db.trip.update({
       where: { id: tripId },
@@ -120,6 +154,8 @@ export async function action({ request, params }: Route.ActionArgs) {
         status: submission.value.status,
         budget: submission.value.budget || null,
         currency: submission.value.currency || "USD",
+        isPublic,
+        slug,
       },
     });
 
@@ -201,9 +237,7 @@ export default function TripEdit({
           </Link>
         </Button>
         <h1 className="text-3xl font-bold">Edit Trip</h1>
-        <p className="text-muted-foreground mt-1">
-          Update your trip details
-        </p>
+        <p className="text-muted-foreground mt-1">Update your trip details</p>
       </div>
 
       <Card>
@@ -429,6 +463,53 @@ export default function TripEdit({
                     </p>
                   )}
                 </div>
+              </div>
+
+              <Separator />
+
+              {/* Privacy */}
+              <div className="space-y-3">
+                <div>
+                  <h3 className="font-medium">Privacy</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Control who can view this trip
+                  </p>
+                </div>
+
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-accent">
+                  <input
+                    type="checkbox"
+                    name="isPublic"
+                    value="on"
+                    defaultChecked={trip.isPublic}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      {trip.isPublic ? (
+                        <Globe className="text-primary h-4 w-4" />
+                      ) : (
+                        <Lock className="h-4 w-4" />
+                      )}
+                      <span className="font-medium">Make trip public</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      Anyone with the link can view this trip and its memories.
+                      {trip.isPublic && trip.slug && (
+                        <span className="text-primary mt-1 block break-all text-xs">
+                          Public URL: /{" "}
+                          <span className="font-mono">{trip.slug}</span>
+                        </span>
+                      )}
+                      {!trip.isPublic && (
+                        <span className="mt-1 block text-xs">
+                          A shareable URL will be generated when you make the
+                          trip public.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </label>
               </div>
 
               {/* Actions */}

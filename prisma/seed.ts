@@ -50,7 +50,7 @@ async function main() {
   console.log(`✓ Created test user: ${TEST_USER.email}`);
   console.log(`  Password: ${TEST_USER.password}`);
 
-  // Create trips with entries and expenses
+  // Create trips with memories and expenses
   const trips = [
     {
       id: "trip_japan_2024",
@@ -66,9 +66,9 @@ async function main() {
       currency: "USD",
       coverImage:
         "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
-      entries: [
+      memories: [
         {
-          id: "entry_tokyo_arrival",
+          id: "memory_tokyo_arrival",
           title: "Arriving in Tokyo",
           content:
             "<p>Finally landed at Narita Airport after a 14-hour flight. The efficiency of everything here is remarkable - from the airport trains to the vending machines on every corner. Checked into our hotel in Shinjuku and immediately went out to explore the neon-lit streets. The sensory overload is real!</p>",
@@ -81,7 +81,7 @@ async function main() {
           rating: 5,
         },
         {
-          id: "entry_tsukiji",
+          id: "memory_tsukiji",
           title: "Tsukiji Outer Market Food Tour",
           content:
             "<p>Started the day early at Tsukiji Outer Market. Had the freshest sushi I've ever tasted - the tuna melted in my mouth. Also tried tamagoyaki (Japanese omelette) fresh off the grill. The vendors were so friendly despite the language barrier.</p>",
@@ -94,7 +94,7 @@ async function main() {
           rating: 5,
         },
         {
-          id: "entry_kyoto_temple",
+          id: "memory_kyoto_temple",
           title: "Fushimi Inari Shrine",
           content:
             "<p>Walked through thousands of vermillion torii gates at Fushimi Inari. Started early to avoid crowds and it was magical watching the sunrise paint the gates golden. The hike to the top took about 2 hours but the views of Kyoto were worth every step.</p>",
@@ -156,9 +156,9 @@ async function main() {
       currency: "USD",
       coverImage:
         "https://images.unsplash.com/photo-1504893524553-b855bce32c67",
-      entries: [
+      memories: [
         {
-          id: "entry_reykjavik",
+          id: "memory_reykjavik",
           title: "First Day in Reykjavik",
           content:
             "<p>Arrived in Reykjavik and picked up our camper van. The air here is so crisp and clean. Walked around the colorful downtown, visited Hallgrímskirkja church and had a delicious lamb soup at a local café. Excited for the adventure ahead!</p>",
@@ -171,7 +171,7 @@ async function main() {
           rating: 4,
         },
         {
-          id: "entry_golden_circle",
+          id: "memory_golden_circle",
           title: "Golden Circle Day Trip",
           content:
             "<p>Did the famous Golden Circle today. Þingvellir National Park was incredible - standing between two tectonic plates! Watched Strokkur geyser erupt every few minutes and got completely soaked by the spray at Gullfoss waterfall. Iceland delivers!</p>",
@@ -184,7 +184,7 @@ async function main() {
           rating: 5,
         },
         {
-          id: "entry_northern_lights",
+          id: "memory_northern_lights",
           title: "Northern Lights Magic",
           content:
             "<p>Finally saw them! We parked the camper van by a remote lake and waited. Around midnight, the sky exploded in green and purple waves. No photo can capture how it felt to witness this natural phenomenon. Tears in my eyes, honestly.</p>",
@@ -236,7 +236,7 @@ async function main() {
       slug: "italian-summer-2025",
       budget: 6000,
       currency: "EUR",
-      entries: [],
+      memories: [],
       expenses: [
         {
           id: "exp_flight_italy",
@@ -251,7 +251,7 @@ async function main() {
   ];
 
   for (const tripData of trips) {
-    const { entries, expenses, ...trip } = tripData;
+    const { memories, expenses, ...trip } = tripData;
 
     // Create trip linked to the test user
     await prisma.trip.upsert({
@@ -265,21 +265,21 @@ async function main() {
 
     console.log(`  ✓ Created trip: ${trip.title}`);
 
-    // Create entries for this trip
-    for (const entry of entries) {
-      await prisma.entry.upsert({
-        where: { id: entry.id },
+    // Create memories for this trip
+    for (const memory of memories) {
+      await prisma.memory.upsert({
+        where: { id: memory.id },
         update: {},
         create: {
-          ...entry,
+          ...memory,
           tripId: trip.id,
           userId: user.id,
         },
       });
     }
 
-    if (entries.length > 0) {
-      console.log(`    → Added ${entries.length} journal entries`);
+    if (memories.length > 0) {
+      console.log(`    → Added ${memories.length} memories`);
     }
 
     // Create expenses for this trip

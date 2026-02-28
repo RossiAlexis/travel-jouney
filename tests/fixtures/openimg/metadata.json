@@ -1,0 +1,6 @@
+{
+  "./tests/fixtures/openimg/fly-storage-tigris-dev/mock-bucket/user/kody-png-w-256-h-256-fit-base.avif": {
+    "size": 8958,
+    "contentType": "image/avif"
+  }
+}

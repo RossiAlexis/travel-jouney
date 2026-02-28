@@ -28,7 +28,7 @@ model User {
   accounts Account[]
   sessions Session[]
   trips    Trip[]
-  entries  Entry[]
+  memories Memory[]
   expenses Expense[]
 
   @@index([email])
@@ -91,7 +91,7 @@ model Trip {
 
   // Relations
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  entries  Entry[]
+  memories Memory[]
   expenses Expense[]
 
   @@unique([userId, slug])
@@ -107,27 +107,27 @@ enum TripStatus {
 }
 
 // ============================================
-// ENTRY (Journal Entry)
+// MEMORY (Travel Memory / Journal Entry)
 // ============================================
 
-model Entry {
-  id              String        @id @default(cuid())
+model Memory {
+  id              String         @id @default(cuid())
   tripId          String
   userId          String
   title           String
-  content         String // Rich text content (HTML/JSON from Tiptap)
+  content         String
   date            DateTime
   locationName    String?
   locationAddress String?
   latitude        Float?
   longitude       Float?
-  placeId         String? // For mapping services
-  category        EntryCategory @default(OTHER)
+  placeId         String?
+  category        MemoryCategory @default(OTHER)
   rating          Int? // 1-5 stars
-  isPublic        Boolean       @default(false)
+  isPublic        Boolean        @default(false)
   slug            String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   // Relations
   trip     Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
@@ -142,7 +142,7 @@ model Entry {
   @@index([category])
 }
 
-enum EntryCategory {
+enum MemoryCategory {
   ACCOMMODATION
   FOOD
   ACTIVITY
@@ -157,16 +157,16 @@ enum EntryCategory {
 
 model Photo {
   id        String   @id @default(cuid())
-  entryId   String
+  memoryId  String
   url       String
   thumbnail String?
   caption   String?
   order     Int      @default(0)
   createdAt DateTime @default(now())
 
-  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  memory Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
 
-  @@index([entryId])
+  @@index([memoryId])
 }
 
 // ============================================
@@ -177,7 +177,7 @@ model Expense {
   id          String          @id @default(cuid())
   tripId      String
   userId      String
-  entryId     String? // Optional link to related entry
+  memoryId    String? // Optional link to related memory
   amount      Float // Store in original currency
   currency    String
   category    ExpenseCategory
@@ -187,9 +187,9 @@ model Expense {
   updatedAt   DateTime        @updatedAt
 
   // Relations
-  trip  Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  entry Entry? @relation(fields: [entryId], references: [id], onDelete: SetNull)
+  trip   Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memory Memory? @relation(fields: [memoryId], references: [id], onDelete: SetNull)
 
   @@index([tripId])
   @@index([userId])
