@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Bitácora de Viaje",
+    "slug": "bitacora-de-viaje",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "bitacora",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bitacora.viaje"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#D97048"
+      },
+      "package": "com.bitacora.viaje",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Bitácora to access your camera to capture memories.",
+          "microphonePermission": "Allow Bitácora to access your microphone to record videos."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Bitácora to access your photos to add to your travel memories.",
+          "cameraPermission": "Allow Bitácora to access your camera to capture memories."
+        }
+      ],
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": false,
+          "supportsPictureInPicture": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "autolinkingModuleResolution": true
+    }
+  }
+}
