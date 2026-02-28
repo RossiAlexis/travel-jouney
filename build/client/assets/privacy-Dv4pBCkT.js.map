@@ -1,0 +1,1 @@
+{"version":3,"file":"privacy-Dv4pBCkT.js","sources":["../../../app/routes/_marketing/privacy.tsx"],"sourcesContent":["export default function PrivacyRoute() {\n\treturn <div>Privacy</div>\n}\n"],"names":["privacy","_UNSAFE_withComponentProps","jsx","children"],"mappings":"wDAAA,MAAAA,EAAAC,EAAA,UAAuC,CACtC,OAAOC,EAAAA,IAAC,OAAIC,SAAA,SAAA,CAAO,CACpB,CAAA"}

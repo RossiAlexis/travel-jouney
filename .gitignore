@@ -1,15 +1,6 @@
 .DS_Store
 .env
 .env.local
-/node_modules/
-
-# React Router
-/.react-router/
-/build/
-
-# Prisma
-/generated/prisma
-
-# SQLite (legacy, can be removed)
+node_modules/
 *.db
 *.db-journal

@@ -1,0 +1,1 @@
+{"version":3,"file":"tos-sfj4tNx4.js","sources":["../../../app/routes/_marketing/tos.tsx"],"sourcesContent":["export default function TermsOfServiceRoute() {\n\treturn <div>Terms of service</div>\n}\n"],"names":["tos","_UNSAFE_withComponentProps","jsx","children"],"mappings":"wDAAA,MAAAA,EAAAC,EAAA,UAA8C,CAC7C,OAAOC,EAAAA,IAAC,OAAIC,SAAA,kBAAA,CAAgB,CAC7B,CAAA"}

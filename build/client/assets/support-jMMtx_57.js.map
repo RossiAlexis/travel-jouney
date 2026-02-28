@@ -1,0 +1,1 @@
+{"version":3,"file":"support-jMMtx_57.js","sources":["../../../app/routes/_marketing/support.tsx"],"sourcesContent":["export default function SupportRoute() {\n\treturn <div>Support</div>\n}\n"],"names":["support","_UNSAFE_withComponentProps","jsx","children"],"mappings":"wDAAA,MAAAA,EAAAC,EAAA,UAAuC,CACtC,OAAOC,EAAAA,IAAC,OAAIC,SAAA,SAAA,CAAO,CACpB,CAAA"}

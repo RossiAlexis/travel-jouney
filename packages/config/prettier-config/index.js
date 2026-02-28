@@ -1,0 +1,15 @@
+/** @type {import("prettier").Config} */
+const config = {
+  semi: true,
+  singleQuote: false,
+  tabWidth: 2,
+  trailingComma: "es5",
+  printWidth: 80,
+  useTabs: false,
+  bracketSpacing: true,
+  bracketSameLine: false,
+  arrowParens: "always",
+  endOfLine: "lf",
+};
+
+export default config;

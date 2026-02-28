@@ -1,0 +1,101 @@
+
+> @repo/web@ build /Users/arossi/workspace/personal/travel-jouney/apps/web
+> react-router build
+
+vite v7.3.1 building client environment for production...
+transforming...
+app/components/ui/avatar.tsx (1:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+app/components/ui/select.tsx (1:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+✓ 1980 modules transformed.
+Generated an empty chunk: "logout".
+rendering chunks...
+computing gzip size...
+build/client/assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2    7.50 kB
+build/client/assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2         9.00 kB
+build/client/assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2     12.11 kB
+build/client/assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2    15.20 kB
+build/client/.vite/manifest.json                                           23.43 kB │ gzip:  2.28 kB
+build/client/assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2        40.40 kB
+build/client/assets/root-C0Clw_cb.css                                      84.04 kB │ gzip: 16.24 kB
+build/client/assets/logout-l0sNRNKZ.js                                      0.00 kB │ gzip:  0.02 kB
+build/client/assets/google-C2M2PhIr.js                                      0.11 kB │ gzip:  0.12 kB
+build/client/assets/plus-9hGFkWU9.js                                        0.17 kB │ gzip:  0.16 kB
+build/client/assets/arrow-left-Bxl5HdLb.js                                  0.18 kB │ gzip:  0.17 kB
+build/client/assets/dollar-sign-CpEBj3k9.js                                 0.23 kB │ gzip:  0.20 kB
+build/client/assets/index-DEz90gy2.js                                       0.24 kB │ gzip:  0.20 kB
+build/client/assets/globe-C5S9Fa0Y.js                                       0.25 kB │ gzip:  0.20 kB
+build/client/assets/circle-alert-xKn51nwn.js                                0.26 kB │ gzip:  0.19 kB
+build/client/assets/map-pin-BC4ioiXZ.js                                     0.27 kB │ gzip:  0.23 kB
+build/client/assets/calendar-ByOM6xNF.js                                    0.27 kB │ gzip:  0.21 kB
+build/client/assets/google-callback-D9PouLW5.js                             0.28 kB │ gzip:  0.23 kB
+build/client/assets/book-open-BTU7r8k_.js                                   0.29 kB │ gzip:  0.22 kB
+build/client/assets/receipt-D9wdhsFO.js                                     0.30 kB │ gzip:  0.22 kB
+build/client/assets/square-pen-CILn6RYM.js                                  0.33 kB │ gzip:  0.25 kB
+build/client/assets/jsx-runtime-u17CrQMm.js                                 0.48 kB │ gzip:  0.31 kB
+build/client/assets/star-bWT_Nlnc.js                                        0.48 kB │ gzip:  0.30 kB
+build/client/assets/settings-BsCJ9n7A.js                                    0.49 kB │ gzip:  0.26 kB
+build/client/assets/index-BEfuG9ux.js                                       0.62 kB │ gzip:  0.44 kB
+build/client/assets/textarea-C6WfPgJj.js                                    0.79 kB │ gzip:  0.44 kB
+build/client/assets/separator-DJUMz5bJ.js                                   0.87 kB │ gzip:  0.47 kB
+build/client/assets/root-DDt2jx1p.js                                        1.13 kB │ gzip:  0.64 kB
+build/client/assets/index-CA746A7V.js                                       1.39 kB │ gzip:  0.71 kB
+build/client/assets/badge-DyzXPsYQ.js                                       1.45 kB │ gzip:  0.69 kB
+build/client/assets/card-Bq-pkRWH.js                                        1.67 kB │ gzip:  0.63 kB
+build/client/assets/index-HmEwWS83.js                                       2.12 kB │ gzip:  0.96 kB
+build/client/assets/forgot-password-B3TT03JR.js                             2.55 kB │ gzip:  1.22 kB
+build/client/assets/profile-CoW9fkIu.js                                     2.68 kB │ gzip:  1.03 kB
+build/client/assets/button-B8EGYcFj.js                                      2.73 kB │ gzip:  0.97 kB
+build/client/assets/reset-password-BPIyuwvJ.js                              2.93 kB │ gzip:  1.15 kB
+build/client/assets/profile-edit-CHI5iW_D.js                                3.66 kB │ gzip:  1.38 kB
+build/client/assets/index-haRSqbbQ.js                                       3.68 kB │ gzip:  1.67 kB
+build/client/assets/index-CAv780wt.js                                       3.71 kB │ gzip:  1.42 kB
+build/client/assets/user-profile-D_XJFAWW.js                                3.86 kB │ gzip:  1.48 kB
+build/client/assets/memory-detail-TOucK2e3.js                               3.97 kB │ gzip:  1.70 kB
+build/client/assets/memory-public-CLPlhNnd.js                               4.07 kB │ gzip:  1.52 kB
+build/client/assets/dashboard-BO3kPszh.js                                   4.11 kB │ gzip:  1.44 kB
+build/client/assets/login-Bdtp3oWV.js                                       4.21 kB │ gzip:  1.78 kB
+build/client/assets/home-B3LUzBZb.js                                        4.38 kB │ gzip:  1.58 kB
+build/client/assets/trip-public-BHFcTgp_.js                                 5.16 kB │ gzip:  1.93 kB
+build/client/assets/register-DaRNg3NR.js                                    5.53 kB │ gzip:  1.92 kB
+build/client/assets/memory-edit-Cfu8bvjl.js                                 5.65 kB │ gzip:  1.96 kB
+build/client/assets/memory-new-wQ05oZeE.js                                  5.81 kB │ gzip:  1.93 kB
+build/client/assets/avatar-REw1hRsU.js                                      6.16 kB │ gzip:  2.65 kB
+build/client/assets/trip-new-CKcqj72h.js                                    6.80 kB │ gzip:  2.11 kB
+build/client/assets/trip-edit-DqaRJGoo.js                                   8.54 kB │ gzip:  2.77 kB
+build/client/assets/expenses-Bd2s1snj.js                                    9.50 kB │ gzip:  3.03 kB
+build/client/assets/alert-dialog-42bevr-4.js                               11.12 kB │ gzip:  3.62 kB
+build/client/assets/trip-detail-BMWa-hP2.js                                13.38 kB │ gzip:  4.62 kB
+build/client/assets/select-CKcQxemW.js                                     22.52 kB │ gzip:  7.86 kB
+build/client/assets/index-DzVbWcV4.js                                      23.08 kB │ gzip:  8.42 kB
+build/client/assets/app-shell-DqSnXhI8.js                                  23.31 kB │ gzip:  7.20 kB
+build/client/assets/index-Cu84DBFO.js                                      27.60 kB │ gzip: 10.67 kB
+build/client/assets/createLucideIcon-CRmum2t4.js                           30.47 kB │ gzip: 10.05 kB
+build/client/assets/alert-DdmMlYpl.js                                     101.29 kB │ gzip: 29.60 kB
+build/client/assets/chunk-EPOLDU6W-hopz-ygJ.js                            124.06 kB │ gzip: 41.95 kB
+build/client/assets/entry.client-BcLh4-ub.js                              186.81 kB │ gzip: 59.08 kB
+✓ built in 2.90s
+vite v7.3.1 building ssr environment for production...
+transforming...
+app/components/ui/avatar.tsx (1:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+app/components/ui/select.tsx (1:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+"default" is imported from external module "react" but never used in "app/routes/home.tsx".
+✓ 45 modules transformed.
+rendering chunks...
+build/server/.vite/manifest.json                                            2.09 kB
+build/server/assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2    7.50 kB
+build/server/assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2         9.00 kB
+build/server/assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2     12.11 kB
+build/server/assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2    15.20 kB
+build/server/assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2        40.40 kB
+build/server/assets/server-build-C0Clw_cb.css                              84.04 kB
+build/server/index.js                                                     261.94 kB
+
+✓ 6 assets cleaned from React Router server build.
+build/client/assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2
+build/client/assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2
+build/client/assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2
+build/client/assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2
+build/client/assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2
+build/server/assets/server-build-C0Clw_cb.css
+
+✓ built in 409ms

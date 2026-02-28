@@ -1,0 +1,1 @@
+{"version":3,"file":"about-BkWVT-zg.js","sources":["../../../app/routes/_marketing/about.tsx"],"sourcesContent":["export default function AboutRoute() {\n\treturn <div>About page</div>\n}\n"],"names":["about","_UNSAFE_withComponentProps","jsx","children"],"mappings":"wDAAA,MAAAA,EAAAC,EAAA,UAAqC,CACpC,OAAOC,EAAAA,IAAC,OAAIC,SAAA,YAAA,CAAU,CACvB,CAAA"}
