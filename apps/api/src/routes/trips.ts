@@ -127,4 +127,79 @@ trips.delete("/:tripId", async (c) => {
   return c.json({ success: true });
 });
 
+trips.get("/:tripId/stats", authMiddleware, async (c) => {
+  const user = c.get("user");
+  const { tripId } = c.req.param();
+
+  const trip = await db.trip.findFirst({
+    where: { id: tripId, userId: user.id },
+    include: {
+      memories: {
+        select: {
+          id: true,
+          date: true,
+          category: true,
+          latitude: true,
+          longitude: true,
+          locationName: true,
+          photos: { select: { id: true } },
+        },
+      },
+      expenses: {
+        select: {
+          amount: true,
+          currency: true,
+          category: true,
+        },
+      },
+    },
+  });
+
+  if (!trip) return c.json({ error: "Trip not found" }, 404);
+
+  const totalMemories = trip.memories.length;
+  const memoriesWithPhotos = trip.memories.filter((m) => m.photos.length > 0).length;
+  const memoriesWithCoords = trip.memories.filter((m) => m.latitude && m.longitude).length;
+
+  // Days traveled
+  const totalDays = trip.endDate
+    ? Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24))
+    : Math.ceil((new Date().getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24));
+
+  // Expense totals by category
+  const expensesByCategory = trip.expenses.reduce((acc, expense) => {
+    if (!acc[expense.category]) acc[expense.category] = 0;
+    acc[expense.category] += expense.amount;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const totalExpenses = Object.values(expensesByCategory).reduce((sum, v) => sum + v, 0);
+
+  // Memories by category
+  const memoriesByCategory = trip.memories.reduce((acc, memory) => {
+    if (!acc[memory.category]) acc[memory.category] = 0;
+    acc[memory.category]++;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Unique locations
+  const uniqueLocations = new Set(
+    trip.memories
+      .map((m) => m.locationName)
+      .filter(Boolean)
+  ).size;
+
+  return c.json({
+    totalMemories,
+    memoriesWithPhotos,
+    memoriesWithCoords,
+    totalDays: Math.max(1, totalDays),
+    totalExpenses,
+    expensesByCategory,
+    memoriesByCategory,
+    uniqueLocations,
+    currency: trip.currency,
+  });
+});
+
 export { trips };

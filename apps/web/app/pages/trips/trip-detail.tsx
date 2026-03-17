@@ -19,6 +19,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import {
   ArrowLeft,
+  BarChart2,
   DollarSign,
   MapPin,
   Pencil,
@@ -30,6 +31,7 @@ import {
   Receipt,
 } from "lucide-react";
 import * as z from "zod";
+import { MapView } from "~/components/MapView";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData?.trip) {
@@ -72,6 +74,8 @@ const tripDetailSchema = z.object({
         "OTHER",
       ]),
       locationName: z.string().nullable(),
+      latitude: z.number().nullable(),
+      longitude: z.number().nullable(),
       rating: z.number().nullable(),
       photos: z.array(
         z.object({
@@ -87,6 +91,14 @@ const tripDetailSchema = z.object({
     expenses: z.number(),
   }),
   totalExpenses: z.number(),
+  stats: z.object({
+    totalMemories: z.number(),
+    memoriesWithPhotos: z.number(),
+    totalDays: z.number(),
+    totalExpenses: z.number(),
+    expensesByCategory: z.record(z.string(), z.number()),
+    memoriesByCategory: z.record(z.string(), z.number()),
+  }),
 });
 
 type TripMemory = z.infer<typeof tripDetailSchema>["memories"][number];
@@ -129,9 +141,35 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     _sum: { amount: true },
   });
 
+  // Compute stats from loaded data
+  const totalExpensesAmount = expenseTotal._sum.amount || 0;
+  const stats = {
+    totalMemories: trip.memories.length,
+    memoriesWithPhotos: trip.memories.filter((m) => m.photos.length > 0).length,
+    totalDays: Math.max(
+      1,
+      trip.endDate
+        ? Math.ceil(
+            (new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : Math.ceil(
+            (new Date().getTime() - new Date(trip.startDate).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+    ),
+    totalExpenses: totalExpensesAmount,
+    expensesByCategory: {} as Record<string, number>,
+    memoriesByCategory: trip.memories.reduce((acc: Record<string, number>, m) => {
+      acc[m.category] = (acc[m.category] ?? 0) + 1;
+      return acc;
+    }, {}),
+  };
+
   const tripWithExpenses = {
     ...trip,
-    totalExpenses: expenseTotal._sum.amount || 0,
+    totalExpenses: totalExpensesAmount,
+    stats,
   };
 
   const parsed = tripDetailSchema.safeParse(tripWithExpenses);
@@ -171,6 +209,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function TripDetail({ loaderData }: Route.ComponentProps) {
   const { trip } = loaderData;
+  const { stats } = trip;
   const deleteFetcher = useFetcher();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isDeleting = deleteFetcher.state === "submitting";
@@ -416,6 +455,10 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             <Receipt className="mr-2 h-4 w-4" />
             Expenses
           </TabsTrigger>
+          <TabsTrigger value="stats">
+            <BarChart2 className="h-4 w-4 mr-1.5" />
+            <span className="hidden sm:inline">Stats</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Timeline Tab */}
@@ -503,16 +546,20 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
 
         {/* Map Tab */}
         <TabsContent value="map">
-          <Card className="py-12 text-center">
-            <CardContent>
-              <Map className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-              <h2 className="mb-2 text-xl font-semibold">Map View</h2>
-              <p className="text-muted-foreground">
-                Interactive map showing your travel route will be available in a
-                future update.
-              </p>
-            </CardContent>
-          </Card>
+          <MapView
+            pins={trip.memories
+              .filter((m) => m.latitude !== null && m.longitude !== null)
+              .map((m) => ({
+                id: m.id,
+                title: m.title,
+                latitude: m.latitude!,
+                longitude: m.longitude!,
+                category: m.category,
+                locationName: m.locationName,
+                date: m.date,
+              }))}
+            tripId={trip.id}
+          />
         </TabsContent>
 
         {/* Gallery Tab */}
@@ -562,6 +609,60 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Stats Tab */}
+        <TabsContent value="stats">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <StatCard
+              label="Memories"
+              value={stats.totalMemories}
+              icon="📖"
+            />
+            <StatCard
+              label="Days"
+              value={Math.max(1, stats.totalDays)}
+              icon="📅"
+            />
+            <StatCard
+              label="With Photos"
+              value={stats.memoriesWithPhotos}
+              icon="📸"
+            />
+            <StatCard
+              label="Total Spent"
+              value={`${trip.currency} ${stats.totalExpenses.toFixed(0)}`}
+              icon="💰"
+            />
+          </div>
+
+          {Object.keys(stats.memoriesByCategory).length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                Memories by Category
+              </h3>
+              {Object.entries(stats.memoriesByCategory)
+                .sort((a, b) => b[1] - a[1])
+                .map(([category, count]) => (
+                  <div key={category} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-24 shrink-0 capitalize">
+                      {category.toLowerCase().replace("_", " ")}
+                    </span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-[width] duration-500"
+                        style={{
+                          width: `${stats.totalMemories > 0 ? (count / stats.totalMemories) * 100 : 0}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium w-6 text-right">
+                      {count}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -599,6 +700,26 @@ const CATEGORY_CONFIG = {
       "bg-stone-50 text-stone-600 dark:bg-stone-900 dark:text-stone-400",
   },
 } as const;
+
+function StatCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string | number;
+  icon: string;
+}) {
+  return (
+    <div className="bg-card border border-border rounded-xl p-4 text-center">
+      <div className="text-2xl mb-1">{icon}</div>
+      <div className="font-display text-2xl font-semibold">{value}</div>
+      <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">
+        {label}
+      </div>
+    </div>
+  );
+}
 
 function MemoryCard({
   memory,
