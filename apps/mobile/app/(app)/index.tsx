@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Pressable, Image } from "react-native";
+import { View, StyleSheet, Pressable, Image, ScrollView } from "react-native";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { ScreenLayout } from "../../src/components/ScreenLayout";
@@ -19,6 +19,7 @@ import {
 } from "../../src/components/Typography";
 import { useAuth } from "../../src/hooks/useAuth";
 import { useTrips } from "../../src/hooks/useTrips";
+import { FAB } from "../../src/components/FAB";
 import { spacing, borderRadius } from "../../src/theme/spacing";
 import { lightColors } from "../../src/theme/colors";
 import { formatDateRange } from "../../src/utils";
@@ -61,49 +62,53 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScreenLayout scrollable contentStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Heading2>
-            {user?.user_metadata?.displayName
-              ? `Welcome, ${user.user_metadata.displayName}`
-              : "Your Journeys"}
-          </Heading2>
-          <Muted>
-            {trips?.length === 0
-              ? "Start documenting your adventures"
-              : `${trips?.length} trip${trips?.length === 1 ? "" : "s"} recorded`}
-          </Muted>
+    <ScreenLayout noPadding style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Heading2>
+              {user?.displayName
+                ? `Welcome, ${user.displayName}`
+                : "Your Journeys"}
+            </Heading2>
+            <Muted>
+              {trips?.length === 0
+                ? "Start documenting your adventures"
+                : `${trips?.length} trip${trips?.length === 1 ? "" : "s"} recorded`}
+            </Muted>
+          </View>
         </View>
-        <Button size="sm" onPress={() => router.push("/(app)/trip/new")}>
-          + New Trip
-        </Button>
-      </View>
 
-      {/* Empty state */}
-      {trips?.length === 0 && (
-        <Card style={styles.emptyCard}>
-          <CardContent>
-            <View style={styles.emptyContent}>
-              <Body style={styles.emptyText}>No trips yet</Body>
-              <Muted style={styles.emptySubtext}>
-                Create your first trip to start documenting your adventures
-              </Muted>
-              <Button
-                onPress={() => router.push("/(app)/trip/new")}
-                style={styles.emptyButton}
-              >
-                Create Your First Trip
-              </Button>
-            </View>
-          </CardContent>
-        </Card>
-      )}
+        {/* Empty state */}
+        {trips?.length === 0 && (
+          <Card style={styles.emptyCard}>
+            <CardContent>
+              <View style={styles.emptyContent}>
+                <Body style={styles.emptyText}>No trips yet</Body>
+                <Muted style={styles.emptySubtext}>
+                  Create your first trip to start documenting your adventures
+                </Muted>
+                <Button
+                  onPress={() => router.push("/(app)/trip/new")}
+                  style={styles.emptyButton}
+                >
+                  Create Your First Trip
+                </Button>
+              </View>
+            </CardContent>
+          </Card>
+        )}
 
-      {renderSection("Ongoing Adventures", ongoingTrips)}
-      {renderSection("Upcoming Trips", plannedTrips)}
-      {renderSection("Past Adventures", completedTrips)}
+        {renderSection("Ongoing Adventures", ongoingTrips)}
+        {renderSection("Upcoming Trips", plannedTrips)}
+        {renderSection("Past Adventures", completedTrips)}
+      </ScrollView>
+      <FAB onPress={() => router.push("/(app)/trip/new")} />
     </ScreenLayout>
   );
 }
@@ -191,10 +196,14 @@ function TripCard({ trip }: { trip: TripWithCount }) {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    position: "relative",
+  },
   content: {
     gap: spacing[6],
+    paddingHorizontal: spacing[4],
     paddingTop: spacing[6],
-    paddingBottom: spacing[8],
+    paddingBottom: spacing[20],
   },
   centered: {
     justifyContent: "center",

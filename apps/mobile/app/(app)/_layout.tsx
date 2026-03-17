@@ -1,24 +1,10 @@
 import React from "react";
-import { View } from "react-native";
 import { Tabs, Redirect } from "expo-router";
 import { StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../src/hooks/useAuth";
 import { lightColors } from "../../src/theme/colors";
 import { fontFamilies } from "../../src/theme/typography";
-
-function TabIcon({ color }: { color: string }) {
-  return (
-    <View
-      style={{
-        width: 20,
-        height: 20,
-        borderRadius: 4,
-        borderWidth: 2,
-        borderColor: color,
-      }}
-    />
-  );
-}
 
 export default function AppLayout() {
   const { isAuthenticated, isInitialized } = useAuth();
@@ -43,14 +29,27 @@ export default function AppLayout() {
         name="index"
         options={{
           title: "Trips",
-          tabBarIcon: ({ color }) => <TabIcon color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="journal-outline" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
           title: "Map",
-          tabBarIcon: ({ color }) => <TabIcon color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen

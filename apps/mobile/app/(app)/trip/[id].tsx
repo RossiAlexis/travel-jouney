@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, Pressable, Alert } from "react-native";
+import { View, StyleSheet, Pressable, Alert, ScrollView } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { ScreenLayout } from "../../../src/components/ScreenLayout";
+import { FAB } from "../../../src/components/FAB";
 import {
   Card,
   CardContent,
@@ -79,64 +80,66 @@ export default function TripDetailScreen() {
   }
 
   return (
-    <ScreenLayout scrollable contentStyle={styles.content}>
-      {/* Back button */}
-      <Pressable onPress={() => router.back()} style={styles.back}>
-        <Body style={{ color: lightColors.primary }}>← Back</Body>
-      </Pressable>
+    <ScreenLayout noPadding style={styles.screen}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Back button */}
+        <Pressable onPress={() => router.back()} style={styles.back}>
+          <Body style={{ color: lightColors.primary }}>← Back</Body>
+        </Pressable>
 
-      {/* Trip header */}
-      <View style={styles.tripHeader}>
-        <Heading2>{trip.title}</Heading2>
-        {trip.description && <Muted>{trip.description}</Muted>}
-        <Muted>
-          {formatDate(trip.startDate)}
-          {trip.endDate ? ` – ${formatDate(trip.endDate)}` : ""}
-        </Muted>
-      </View>
+        {/* Trip header */}
+        <View style={styles.tripHeader}>
+          <Heading2>{trip.title}</Heading2>
+          {trip.description && <Muted>{trip.description}</Muted>}
+          <Muted>
+            {formatDate(trip.startDate)}
+            {trip.endDate ? ` – ${formatDate(trip.endDate)}` : ""}
+          </Muted>
+        </View>
 
-      {/* Actions */}
-      <View style={styles.actions}>
-        <Button variant="destructive" size="sm" onPress={handleDelete}>
-          Delete
-        </Button>
-      </View>
-
-      {/* Memories section */}
-      <View style={styles.memoriesSection}>
-        <View style={styles.memoriesHeader}>
-          <Heading4>Memories</Heading4>
-          <Button
-            size="sm"
-            variant="outline"
-            onPress={() =>
-              router.push({
-                pathname: '/(app)/trip/memory/new',
-                params: { tripId: id },
-              })
-            }
-          >
-            + Add
+        {/* Actions */}
+        <View style={styles.actions}>
+          <Button variant="destructive" size="sm" onPress={handleDelete}>
+            Delete
           </Button>
         </View>
 
-        {memoriesLoading && <Muted>Loading memories…</Muted>}
+        {/* Memories section */}
+        <View style={styles.memoriesSection}>
+          <View style={styles.memoriesHeader}>
+            <Heading4>Memories</Heading4>
+          </View>
 
-        {!memoriesLoading && memories?.length === 0 && (
-          <Card>
-            <CardContent>
-              <View style={styles.emptyMemories}>
-                <Muted>No memories yet</Muted>
-                <Caption>Capture your first memory from this trip</Caption>
-              </View>
-            </CardContent>
-          </Card>
-        )}
+          {memoriesLoading && <Muted>Loading memories…</Muted>}
 
-        {memories?.map((memory) => (
-          <MemoryCard key={memory.id} memory={memory} />
-        ))}
-      </View>
+          {!memoriesLoading && memories?.length === 0 && (
+            <Card>
+              <CardContent>
+                <View style={styles.emptyMemories}>
+                  <Muted>No memories yet</Muted>
+                  <Caption>Capture your first memory from this trip</Caption>
+                </View>
+              </CardContent>
+            </Card>
+          )}
+
+          {memories?.map((memory) => (
+            <MemoryCard key={memory.id} memory={memory} />
+          ))}
+        </View>
+      </ScrollView>
+      <FAB
+        onPress={() =>
+          router.push({
+            pathname: "/(app)/trip/memory/new",
+            params: { tripId: id },
+          })
+        }
+      />
     </ScreenLayout>
   );
 }
@@ -168,10 +171,14 @@ function MemoryCard({ memory }: { memory: Memory }) {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    position: "relative",
+  },
   content: {
     gap: spacing[6],
+    paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
-    paddingBottom: spacing[8],
+    paddingBottom: spacing[20],
   },
   centered: {
     justifyContent: "center",
