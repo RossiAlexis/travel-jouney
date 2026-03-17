@@ -1,28 +1,37 @@
 import { Link, data } from "react-router";
 import type { Route } from "./+types/trip-public";
 import { db } from "~/lib/db.server";
-import { Card, CardContent } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import {
-  Calendar,
-  MapPin,
-  ArrowLeft,
-  BookOpen,
-  Star,
-} from "lucide-react";
-import type { TripStatus, MemoryCategory } from "~/types";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.trip) {
-    return [{ title: "Trip Not Found - Bitácora de Viaje" }];
+    return [{ title: "Trip — Bitácora de Viaje" }];
   }
+  const { trip, user } = data;
+  const description =
+    trip.description ||
+    (trip.memories?.[0]?.content
+      ? trip.memories[0].content.substring(0, 150) + "..."
+      : `A travel journal by ${user.displayName}`);
+  const ogImage =
+    trip.memories?.find((m) => m.photos?.[0])?.photos?.[0]?.url ?? null;
+
   return [
-    { title: `${data.trip.title} by ${data.user.displayName} - Bitácora de Viaje` },
+    { title: `${trip.title} — ${user.displayName} | Bitácora de Viaje` },
+    { name: "description", content: description },
+    { property: "og:title", content: `${trip.title} — ${user.displayName}` },
+    { property: "og:description", content: description },
+    { property: "og:type", content: "article" },
+    ...(ogImage ? [{ property: "og:image", content: ogImage }] : []),
     {
-      name: "description",
-      content: data.trip.description || `${data.trip.title} travel journal`,
+      property: "twitter:card",
+      content: ogImage ? "summary_large_image" : "summary",
     },
+    {
+      property: "twitter:title",
+      content: `${trip.title} — ${user.displayName}`,
+    },
+    { property: "twitter:description", content: description },
+    ...(ogImage ? [{ property: "twitter:image", content: ogImage }] : []),
   ];
 }
 
@@ -85,202 +94,288 @@ export async function loader({ params }: Route.LoaderArgs) {
   return data({ user, trip });
 }
 
-const statusColors: Record<TripStatus, string> = {
-  PLANNED: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  ONGOING: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  COMPLETED: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-};
+export default function TripPublicPage({
+  loaderData,
+}: Route.ComponentProps) {
+  const { trip, user } = loaderData;
 
-const statusLabels: Record<TripStatus, string> = {
-  PLANNED: "Planned",
-  ONGOING: "Ongoing",
-  COMPLETED: "Completed",
-};
-
-const categoryIcons: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "🏨",
-  FOOD: "🍽️",
-  ACTIVITY: "🎯",
-  TRANSPORT: "🚗",
-  REFLECTION: "💭",
-  OTHER: "📝",
-};
-
-const categoryLabels: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "Accommodation",
-  FOOD: "Food & Dining",
-  ACTIVITY: "Activity",
-  TRANSPORT: "Transport",
-  REFLECTION: "Reflection",
-  OTHER: "Other",
-};
-
-export default function TripPublic({ loaderData }: Route.ComponentProps) {
-  const { user, trip } = loaderData;
-
-  const initials = user.displayName
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
-  const formatDate = (date: Date | string) =>
-    new Date(date).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-  const formatMonthYear = (date: Date | string) =>
-    new Date(date).toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
+  const heroPhoto =
+    trip.memories?.find((m) => m.photos?.[0])?.photos?.[0]?.url ?? null;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        {/* Back link */}
-        <Link
-          to={`/${user.username}`}
-          className="text-muted-foreground hover:text-foreground mb-6 flex items-center gap-1 text-sm transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {user.displayName}&apos;s journal
-        </Link>
-
-        {/* Trip Header */}
-        <div className="mb-8">
-          <div className="mb-2 flex items-center gap-3">
-            <h1 className="text-3xl font-bold">{trip.title}</h1>
-            <Badge className={statusColors[trip.status]} variant="secondary">
-              {statusLabels[trip.status]}
-            </Badge>
-          </div>
-
-          {trip.description && (
-            <p className="text-muted-foreground mb-4">{trip.description}</p>
-          )}
-
-          <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" />
-              {formatMonthYear(trip.startDate)}
-              {trip.endDate && ` — ${formatMonthYear(trip.endDate)}`}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <BookOpen className="h-4 w-4" />
-              {trip.memories.length}{" "}
-              {trip.memories.length !== 1 ? "memories" : "memory"}
-            </span>
-          </div>
-
-          {/* Author */}
-          <div className="mt-4 flex items-center gap-2">
-            <Avatar className="h-7 w-7">
-              <AvatarImage src={user.avatar ?? undefined} alt={user.displayName} />
-              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-            </Avatar>
-            <Link
-              to={`/${user.username}`}
-              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
-            >
-              by {user.displayName}
-            </Link>
-          </div>
-        </div>
-
-        {/* Memories Timeline */}
-        {trip.memories.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <BookOpen className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-              <p className="text-muted-foreground">No memories yet.</p>
-            </CardContent>
-          </Card>
+      {/* Full-bleed hero */}
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ minHeight: "60vh", maxHeight: "80vh" }}
+      >
+        {heroPhoto ? (
+          <img
+            src={heroPhoto}
+            alt={trip.title}
+            className="w-full h-full object-cover"
+            style={{ minHeight: "60vh", maxHeight: "80vh" }}
+          />
         ) : (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Travel Memories</h2>
-            {trip.memories.map((memory) => {
-              const memoryLink =
-                memory.slug
-                  ? `/${user.username}/${trip.slug}/${memory.slug}`
-                  : undefined;
-
-              const content = (
-                <Card className="transition-shadow hover:shadow-md">
-                  <CardContent className="flex gap-4 py-4">
-                    {memory.photos.length > 0 ? (
-                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        <img
-                          src={
-                            memory.photos[0].thumbnail || memory.photos[0].url
-                          }
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted text-2xl">
-                        {categoryIcons[memory.category]}
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="line-clamp-1 font-semibold">
-                          {memory.title}
-                        </h3>
-                        {memory.rating && (
-                          <span className="flex shrink-0 items-center gap-0.5 text-yellow-500">
-                            <Star className="h-3.5 w-3.5 fill-current" />
-                            <span className="text-xs">{memory.rating}/5</span>
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-sm">
-                        <span>{formatDate(memory.date)}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {categoryLabels[memory.category]}
-                        </Badge>
-                        {memory.locationName && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {memory.locationName}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">
-                        {memory.content}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-
-              return memoryLink ? (
-                <Link key={memory.id} to={memoryLink}>
-                  {content}
-                </Link>
-              ) : (
-                <div key={memory.id}>{content}</div>
-              );
-            })}
-          </div>
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-primary/30 via-secondary/20 to-muted"
+            style={{ minHeight: "60vh" }}
+          />
         )}
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-muted-foreground text-sm">
-            Powered by{" "}
-            <Link to="/" className="text-primary hover:underline">
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+
+        {/* Hero content */}
+        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 lg:p-16">
+          {/* Author row */}
+          <div className="flex items-center justify-between mb-4">
+            <Link
+              to={`/${user.username}`}
+              className="flex items-center gap-3 group"
+            >
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.displayName}
+                  className="w-9 h-9 rounded-full border-2 border-white/30"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-primary/60 border-2 border-white/30 flex items-center justify-center text-white text-sm font-semibold">
+                  {user.displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="text-white/90 text-sm font-medium group-hover:text-white transition-colors">
+                  {user.displayName}
+                </p>
+                <p className="text-white/50 text-xs">@{user.username}</p>
+              </div>
+            </Link>
+            <ShareButton trip={trip} />
+          </div>
+
+          {/* Status label */}
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/60 mb-2">
+            {trip.status === "ONGOING"
+              ? "Ongoing Journey"
+              : trip.status === "PLANNED"
+                ? "Upcoming"
+                : "Travel Journal"}
+          </p>
+
+          {/* Title */}
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight max-w-3xl">
+            {trip.title}
+          </h1>
+
+          {trip.description && (
+            <p className="text-white/70 text-lg mt-3 max-w-2xl leading-relaxed line-clamp-2">
+              {trip.description}
+            </p>
+          )}
+
+          <div className="flex items-center gap-4 mt-4 text-white/50 text-sm">
+            <span>
+              {new Date(trip.startDate).toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+              {trip.endDate
+                ? ` — ${new Date(trip.endDate).toLocaleDateString("en-US", { month: "long", year: "numeric" })}`
+                : ""}
+            </span>
+            <span>·</span>
+            <span>{trip.memories?.length ?? 0} memories</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Editorial body */}
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        {trip.memories && trip.memories.length > 0 ? (
+          <div className="space-y-16">
+            {trip.memories.map((memory, index) => (
+              <MemoryEditorialBlock
+                key={memory.id}
+                memory={memory}
+                index={index}
+                username={user.username}
+                tripSlug={trip.slug!}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <p className="font-display text-2xl font-semibold mb-2">
+              No memories yet
+            </p>
+            <p className="text-muted-foreground">
+              Check back soon — this story is still being written.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-border py-8 mt-12">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Shared on{" "}
+            <Link to="/" className="text-primary font-medium hover:underline">
               Bitácora de Viaje
             </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+type MemoryShape = {
+  id: string;
+  title: string;
+  content: string | null;
+  date: Date | string;
+  category: string;
+  rating: number | null;
+  locationName: string | null;
+  slug: string | null;
+  photos: { url: string; thumbnail: string | null }[];
+};
+
+function MemoryEditorialBlock({
+  memory,
+  index,
+  username,
+  tripSlug,
+}: {
+  memory: MemoryShape;
+  index: number;
+  username: string;
+  tripSlug: string;
+}) {
+  const hasPhoto = memory.photos && memory.photos.length > 0;
+  const isEven = index % 2 === 0;
+  const isReflection = memory.category === "REFLECTION";
+  const slug = memory.slug;
+
+  const textBlock = (
+    <Link
+      to={`/${username}/${tripSlug}/${slug}`}
+      className="group block"
+      prefetch="intent"
+    >
+      <div className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          {new Date(memory.date).toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+          {memory.locationName ? ` · ${memory.locationName}` : ""}
+        </p>
+        <h2 className="font-display text-2xl sm:text-3xl font-semibold leading-snug group-hover:text-primary transition-colors">
+          {memory.title}
+        </h2>
+        {memory.content && (
+          <p className="text-base leading-relaxed text-muted-foreground line-clamp-4">
+            {memory.content}
+          </p>
+        )}
+        <span className="text-sm text-primary font-medium group-hover:underline">
+          Read more →
+        </span>
+      </div>
+    </Link>
+  );
+
+  // REFLECTION category: centered pull-quote layout
+  if (isReflection) {
+    return (
+      <div className="py-8 text-center border-y border-border">
+        <p className="font-display text-3xl sm:text-4xl font-semibold leading-snug italic text-foreground/80 max-w-lg mx-auto">
+          ❝ {memory.title} ❞
+        </p>
+        {memory.locationName && (
+          <p className="text-sm text-muted-foreground mt-3">
+            — {memory.locationName}
+          </p>
+        )}
+        {slug && (
+          <Link
+            to={`/${username}/${tripSlug}/${slug}`}
+            className="text-sm text-primary font-medium hover:underline mt-3 inline-block"
+            prefetch="intent"
+          >
+            Read full entry →
+          </Link>
+        )}
+      </div>
+    );
+  }
+
+  // With photo: alternating image-text layout
+  if (hasPhoto) {
+    return (
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10 items-start ${isEven ? "" : "sm:[&>*:first-child]:order-last"}`}
+      >
+        <div className="rounded-xl overflow-hidden aspect-[4/3]">
+          <img
+            src={memory.photos[0].thumbnail ?? memory.photos[0].url}
+            alt={memory.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="flex items-center">{textBlock}</div>
+      </div>
+    );
+  }
+
+  // Text-forward: no photo
+  return <div className="max-w-lg">{textBlock}</div>;
+}
+
+function ShareButton({
+  trip,
+}: {
+  trip: { title: string; slug: string | null };
+}) {
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title: trip.title, url }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(url).catch(() => {});
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-xs font-medium transition-colors"
+      aria-label="Share this trip"
+    >
+      <svg
+        className="w-3.5 h-3.5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+        />
+      </svg>
+      Share
+    </button>
   );
 }
