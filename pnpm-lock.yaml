@@ -256,6 +256,9 @@ importers:
       isbot:
         specifier: ^5.1.31
         version: 5.1.35
+      jose:
+        specifier: ^5.9.6
+        version: 5.10.0
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
@@ -436,10 +439,16 @@ importers:
 
   packages/services:
     dependencies:
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../db
       '@repo/types':
         specifier: workspace:*
         version: link:../types
     devDependencies:
+      '@repo/tsconfig':
+        specifier: workspace:*
+        version: link:../config/tsconfig
       typescript:
         specifier: ^5.0.0
         version: 5.9.3

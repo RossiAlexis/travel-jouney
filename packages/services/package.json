@@ -8,15 +8,18 @@
     ".": "./src/index.ts",
     "./trips": "./src/trips.ts",
     "./memories": "./src/memories.ts",
-    "./expenses": "./src/expenses.ts"
+    "./expenses": "./src/expenses.ts",
+    "./profile": "./src/profile.ts"
   },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@repo/types": "workspace:*"
   },
   "devDependencies": {
+    "@repo/tsconfig": "workspace:*",
     "typescript": "^5.0.0"
   }
 }
