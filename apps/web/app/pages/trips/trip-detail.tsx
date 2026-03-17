@@ -5,7 +5,6 @@ import { requireAuth } from "~/lib/auth.server";
 import { db } from "~/lib/db.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
-import { Badge } from "~/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   AlertDialog,
@@ -20,10 +19,9 @@ import {
 } from "~/components/ui/alert-dialog";
 import {
   ArrowLeft,
-  Calendar,
   DollarSign,
-  Edit,
   MapPin,
+  Pencil,
   Plus,
   Trash2,
   BookOpen,
@@ -31,7 +29,6 @@ import {
   Map,
   Receipt,
 } from "lucide-react";
-import type { TripStatus, MemoryCategory } from "~/types";
 import * as z from "zod";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -91,6 +88,8 @@ const tripDetailSchema = z.object({
   }),
   totalExpenses: z.number(),
 });
+
+type TripMemory = z.infer<typeof tripDetailSchema>["memories"][number];
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
@@ -170,51 +169,11 @@ export async function action({ request, params }: Route.ActionArgs) {
   return data({ error: "Invalid action" }, { status: 400 });
 }
 
-const statusColors: Record<TripStatus, string> = {
-  PLANNED: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  ONGOING: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  COMPLETED: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-};
-
-const statusLabels: Record<TripStatus, string> = {
-  PLANNED: "Planned",
-  ONGOING: "Ongoing",
-  COMPLETED: "Completed",
-};
-
-const categoryIcons: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "🏨",
-  FOOD: "🍽️",
-  ACTIVITY: "🎯",
-  TRANSPORT: "🚗",
-  REFLECTION: "💭",
-  OTHER: "📝",
-};
-
-const categoryLabels: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "Accommodation",
-  FOOD: "Food & Dining",
-  ACTIVITY: "Activity",
-  TRANSPORT: "Transport",
-  REFLECTION: "Reflection",
-  OTHER: "Other",
-};
-
 export default function TripDetail({ loaderData }: Route.ComponentProps) {
   const { trip } = loaderData;
   const deleteFetcher = useFetcher();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isDeleting = deleteFetcher.state === "submitting";
-
-  const formatDate = (date: Date | string) => {
-    const dateObj = typeof date === "string" ? new Date(date) : date;
-    return dateObj.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
@@ -237,6 +196,23 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
     }))
   );
 
+  // Group memories by calendar day
+  const memoriesByDay = trip.memories.reduce(
+    (acc, memory) => {
+      const dayKey = new Date(memory.date).toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
+      if (!acc[dayKey]) acc[dayKey] = [];
+      acc[dayKey].push(memory);
+      return acc;
+    },
+    {} as Record<string, typeof trip.memories>
+  );
+
+  const dayGroups = Object.entries(memoriesByDay);
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -247,57 +223,105 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
         </Link>
       </Button>
 
-      {/* Trip Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">{trip.title}</h1>
-            <Badge className={statusColors[trip.status]} variant="secondary">
-              {statusLabels[trip.status]}
-            </Badge>
+      {/* Hero */}
+      <div
+        className="relative w-full overflow-hidden rounded-2xl"
+        style={{ minHeight: "280px", maxHeight: "420px" }}
+      >
+        {trip.coverImage ? (
+          <img
+            src={trip.coverImage}
+            alt={trip.title}
+            className="w-full h-full object-cover"
+            style={{ minHeight: "280px", maxHeight: "420px" }}
+          />
+        ) : (
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/10 to-muted"
+            style={{ minHeight: "280px" }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+          <div className="flex items-center gap-2 mb-3">
+            <span
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
+                trip.status === "ONGOING"
+                  ? "bg-emerald-500/80 text-white"
+                  : trip.status === "PLANNED"
+                    ? "bg-sky-500/80 text-white"
+                    : "bg-black/40 text-white/70"
+              }`}
+            >
+              {trip.status === "ONGOING"
+                ? "Ongoing"
+                : trip.status === "PLANNED"
+                  ? "Planned"
+                  : "Completed"}
+            </span>
+            {trip.isPublic && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-black/40 text-white/70 backdrop-blur-sm">
+                Public
+              </span>
+            )}
           </div>
-
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-white leading-tight">
+            {trip.title}
+          </h1>
           {trip.description && (
-            <p className="text-muted-foreground max-w-2xl">
+            <p className="text-white/70 text-sm mt-2 line-clamp-2 max-w-xl">
               {trip.description}
             </p>
           )}
-
-          <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" />
-              <span>{formatDate(trip.startDate)}</span>
-              {trip.endDate && <span> - {formatDate(trip.endDate)}</span>}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <BookOpen className="h-4 w-4" />
-              <span>
-                {trip._count.memories}{" "}
-                {trip._count.memories === 1 ? "memory" : "memories"}
-              </span>
-            </div>
-            {trip.budget && (
-              <div className="flex items-center gap-1.5">
-                <DollarSign className="h-4 w-4" />
+          <div className="flex items-center gap-4 mt-3 text-white/60 text-sm">
+            <span>
+              {new Date(trip.startDate).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+            {trip.endDate && (
+              <>
+                <span>—</span>
                 <span>
-                  {formatCurrency(trip.totalExpenses, trip.currency)} /{" "}
-                  {formatCurrency(trip.budget, trip.currency)}
+                  {new Date(trip.endDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </span>
-              </div>
+              </>
             )}
+            <span>·</span>
+            <span>
+              {trip.memories.length}{" "}
+              {trip.memories.length === 1 ? "memory" : "memories"}
+            </span>
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-2">
-          <Button asChild>
+      {/* Actions Row */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm">
             <Link to={`/trips/${trip.id}/memories/new`}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
               Add Memory
             </Link>
           </Button>
-          <Button variant="outline" asChild>
+          <Button asChild variant="outline" size="sm">
+            <Link to={`/trips/${trip.id}/expenses`}>
+              <DollarSign className="mr-1.5 h-3.5 w-3.5" />
+              Expenses
+            </Link>
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
             <Link to={`/trips/${trip.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
+              <Pencil className="mr-1.5 h-3.5 w-3.5" />
               Edit
             </Link>
           </Button>
@@ -354,7 +378,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             </div>
             <div className="bg-muted h-2 overflow-hidden rounded-full">
               <div
-                className={`h-full transition-all ${
+                className={`h-full transition-[width] duration-500 ${
                   isOverBudget ? "bg-destructive" : "bg-primary"
                 }`}
                 style={{ width: `${budgetProgress}%` }}
@@ -397,82 +421,82 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
         {/* Timeline Tab */}
         <TabsContent value="timeline">
           {trip.memories.length === 0 ? (
-            <Card className="py-12 text-center">
-              <CardContent>
-                <BookOpen className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                <h2 className="mb-2 text-xl font-semibold">No memories yet</h2>
-                <p className="text-muted-foreground mb-6">
-                  Start documenting your journey by adding your first memory
-                </p>
-                <Button asChild>
-                  <Link to={`/trips/${trip.id}/memories/new`}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add First Memory
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {trip.memories.map((memory) => (
-                <Link
-                  key={memory.id}
-                  to={`/trips/${trip.id}/memories/${memory.id}`}
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-24 h-20 mb-4 opacity-50">
+                <svg
+                  viewBox="0 0 96 80"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-full h-full text-muted-foreground"
                 >
-                  <Card className="transition-shadow hover:shadow-md">
-                    <CardContent className="flex gap-4 py-4">
-                      {/* Memory Photo Preview */}
-                      {memory.photos.length > 0 ? (
-                        <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
-                          <img
-                            src={
-                              memory.photos[0].thumbnail || memory.photos[0].url
-                            }
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                          {memory.photos.length > 1 && (
-                            <div className="absolute right-1 bottom-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">
-                              +{memory.photos.length - 1}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-2xl">
-                          {categoryIcons[memory.category]}
-                        </div>
-                      )}
-
-                      {/* Memory Details */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="line-clamp-1 font-semibold">
-                            {memory.title}
-                          </h3>
-                          {memory.rating && (
-                            <div className="flex items-center gap-0.5 text-yellow-500">
-                              {"★".repeat(memory.rating)}
-                              {"☆".repeat(5 - memory.rating)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-sm">
-                          <span>{formatDate(memory.date)}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {categoryLabels[memory.category]}
-                          </Badge>
-                          {memory.locationName && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {memory.locationName}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <rect
+                    x="16"
+                    y="12"
+                    width="64"
+                    height="56"
+                    rx="4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path d="M16 28h64" stroke="currentColor" strokeWidth="2" />
+                  <path
+                    d="M32 20v-8M64 20v-8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M32 44h32M32 54h20"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <p className="font-display text-xl font-semibold mb-1">
+                This chapter is blank
+              </p>
+              <p className="text-muted-foreground text-sm max-w-xs mb-4">
+                Start writing your adventure. Add your first memory — a meal, a
+                view, a feeling worth keeping.
+              </p>
+              <Button asChild size="sm">
+                <Link to={`/trips/${trip.id}/memories/new`}>
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Add First Memory
                 </Link>
-              ))}
+              </Button>
+            </div>
+          ) : (
+            <div className="relative">
+              {/* Vertical axis line */}
+              <div className="absolute left-[19px] top-6 bottom-6 w-px bg-border" />
+
+              <div className="space-y-8">
+                {dayGroups.map(([day, dayMemories]) => (
+                  <div key={day}>
+                    {/* Date header */}
+                    <div className="relative flex items-center gap-3 mb-4">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground bg-background px-3 py-1 rounded-full border border-border shrink-0">
+                        {day}
+                      </span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+
+                    {/* Memories for this day */}
+                    <div className="ml-10 space-y-4">
+                      {dayMemories.map((memory) => (
+                        <MemoryCard
+                          key={memory.id}
+                          memory={memory}
+                          tripId={trip.id}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </TabsContent>
@@ -514,9 +538,9 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                   <img
                     src={photo.thumbnail || photo.url}
                     alt={photo.memoryTitle}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />
+                  <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/30" />
                 </Link>
               ))}
             </div>
@@ -540,5 +564,120 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+const CATEGORY_CONFIG = {
+  ACCOMMODATION: {
+    label: "Accommodation",
+    color:
+      "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400",
+  },
+  FOOD: {
+    label: "Food & Dining",
+    color: "bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
+  },
+  ACTIVITY: {
+    label: "Activity",
+    color:
+      "bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400",
+  },
+  TRANSPORT: {
+    label: "Transport",
+    color: "bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-400",
+  },
+  REFLECTION: {
+    label: "Reflection",
+    color:
+      "bg-violet-50 text-violet-600 dark:bg-violet-950 dark:text-violet-400",
+  },
+  OTHER: {
+    label: "Journal",
+    color:
+      "bg-stone-50 text-stone-600 dark:bg-stone-900 dark:text-stone-400",
+  },
+} as const;
+
+function MemoryCard({
+  memory,
+  tripId,
+}: {
+  memory: TripMemory;
+  tripId: string;
+}) {
+  const category =
+    CATEGORY_CONFIG[memory.category as keyof typeof CATEGORY_CONFIG] ??
+    CATEGORY_CONFIG.OTHER;
+  const hasPhoto = memory.photos && memory.photos.length > 0;
+
+  return (
+    <Link to={`/trips/${tripId}/memories/${memory.id}`} className="block group">
+      <div className="rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors duration-200">
+        {hasPhoto ? (
+          /* Variant A: With photo — image left */
+          <div className="grid grid-cols-[160px_1fr] sm:grid-cols-[200px_1fr]">
+            <div className="relative overflow-hidden">
+              <img
+                src={memory.photos[0].thumbnail ?? memory.photos[0].url}
+                alt={memory.title}
+                className="w-full h-full object-cover min-h-[120px] transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <div className="p-4">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${category.color}`}
+              >
+                {category.label}
+              </span>
+              <h3 className="font-display text-base font-semibold leading-snug group-hover:text-primary transition-colors duration-200">
+                {memory.title}
+              </h3>
+              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                {memory.rating && (
+                  <span className="text-amber-400">
+                    {"★".repeat(memory.rating)}
+                    {"☆".repeat(5 - memory.rating)}
+                  </span>
+                )}
+                {memory.locationName && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {memory.locationName}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Variant B: Text-forward */
+          <div className="p-4">
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mb-2 ${category.color}`}
+            >
+              {category.label}
+            </span>
+            <h3 className="font-display text-base font-semibold leading-snug group-hover:text-primary transition-colors duration-200">
+              {memory.title}
+            </h3>
+            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+              {memory.rating && (
+                <span className="text-amber-400">
+                  {"★".repeat(memory.rating)}
+                  {"☆".repeat(5 - memory.rating)}
+                </span>
+              )}
+              {memory.locationName && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {memory.locationName}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
