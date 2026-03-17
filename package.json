@@ -10,7 +10,8 @@
     "typecheck": "turbo typecheck",
     "format": "turbo format",
     "web:dev": "pnpm --filter @repo/web dev",
-    "mobile:dev": "pnpm --filter @repo/mobile start"
+    "mobile:dev": "pnpm --filter @repo/mobile start",
+    "api:dev": "pnpm --filter @repo/api dev"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

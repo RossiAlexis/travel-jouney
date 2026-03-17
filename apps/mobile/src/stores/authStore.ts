@@ -1,43 +1,60 @@
 import { create } from "zustand";
-import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
-import { supabase } from "../services/supabase";
+import * as SecureStore from "expo-secure-store";
+import { apiRequest } from "../services/api";
+
+export interface SessionUser {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string;
+  avatar: string | null;
+}
+
+const TOKEN_KEY = "auth_token";
 
 interface AuthState {
-  session: Session | null;
-  user: SupabaseUser | null;
+  token: string | null;
+  user: SessionUser | null;
   isLoading: boolean;
   isInitialized: boolean;
 
   // Actions
-  setSession: (session: Session | null) => void;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    username: string,
+    displayName: string,
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   initialize: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  session: null,
+  token: null,
   user: null,
   isLoading: false,
   isInitialized: false,
 
-  setSession: (session) => set({ session, user: session?.user ?? null }),
-
   initialize: async () => {
     set({ isLoading: true });
     try {
-      const { data } = await supabase.auth.getSession();
-      set({
-        session: data.session,
-        user: data.session?.user ?? null,
-        isInitialized: true,
-      });
+      const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      if (!token) {
+        set({ isInitialized: true });
+        return;
+      }
 
-      // Listen for auth state changes
-      supabase.auth.onAuthStateChange((_event, session) => {
-        set({ session, user: session?.user ?? null });
-      });
+      const data = await apiRequest<{ user: SessionUser }>(
+        "/auth/me",
+        {},
+        token,
+      );
+      set({ token, user: data.user, isInitialized: true });
+    } catch {
+      // Token invalid or expired — clear it
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      set({ token: null, user: null, isInitialized: true });
     } finally {
       set({ isLoading: false });
     }
@@ -46,23 +63,32 @@ export const useAuthStore = create<AuthState>((set) => ({
   signIn: async (email, password) => {
     set({ isLoading: true });
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      set({ session: data.session, user: data.user });
+      const data = await apiRequest<{ token: string; user: SessionUser }>(
+        "/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        },
+      );
+      await SecureStore.setItemAsync(TOKEN_KEY, data.token);
+      set({ token: data.token, user: data.user });
     } finally {
       set({ isLoading: false });
     }
   },
 
-  signUp: async (email, password) => {
+  signUp: async (email, password, username, displayName) => {
     set({ isLoading: true });
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-      set({ session: data.session, user: data.user });
+      const data = await apiRequest<{ token: string; user: SessionUser }>(
+        "/auth/register",
+        {
+          method: "POST",
+          body: JSON.stringify({ email, password, username, displayName }),
+        },
+      );
+      await SecureStore.setItemAsync(TOKEN_KEY, data.token);
+      set({ token: data.token, user: data.user });
     } finally {
       set({ isLoading: false });
     }
@@ -71,9 +97,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     set({ isLoading: true });
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      set({ session: null, user: null });
+      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      set({ token: null, user: null });
     } finally {
       set({ isLoading: false });
     }

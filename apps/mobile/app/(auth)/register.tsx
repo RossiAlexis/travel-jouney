@@ -21,6 +21,18 @@ import { lightColors } from "../../src/theme/colors";
 const registerSchema = z
   .object({
     email: z.string().email("Please enter a valid email address"),
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .max(30, "Username must be at most 30 characters")
+      .regex(
+        /^[a-z0-9-]+$/,
+        "Username can only contain lowercase letters, numbers, and hyphens",
+      ),
+    displayName: z
+      .string()
+      .min(1, "Display name is required")
+      .max(50, "Display name must be at most 50 characters"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
   })
@@ -40,12 +52,18 @@ export default function RegisterScreen() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      email: "",
+      username: "",
+      displayName: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   async function onSubmit(data: RegisterForm) {
     try {
-      await signUp(data.email, data.password);
+      await signUp(data.email, data.password, data.username, data.displayName);
       router.replace("/(app)");
     } catch (error) {
       Alert.alert(
@@ -84,6 +102,39 @@ export default function RegisterScreen() {
                   onBlur={onBlur}
                   value={value}
                   error={errors.email?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="username"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Username"
+                  placeholder="your-username"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  value={value}
+                  error={errors.username?.message}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="displayName"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="Display name"
+                  placeholder="Your Name"
+                  autoComplete="name"
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  value={value}
+                  error={errors.displayName?.message}
                 />
               )}
             />

@@ -15,9 +15,10 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate --schema ../../packages/db/prisma/schema.prisma"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@repo/types": "workspace:*",
     "@prisma/adapter-pg": "^7.2.0",
     "pg": "^8.13.0",

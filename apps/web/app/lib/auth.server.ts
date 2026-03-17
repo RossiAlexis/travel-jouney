@@ -1,26 +1,8 @@
 import { db } from "./db.server";
 import { getSession, commitSession, destroySession } from "./session.server";
-import bcrypt from "bcryptjs";
 import type { SessionUser } from "~/types";
 
-const SALT_ROUNDS = 12;
-
-/**
- * Hash a password using bcrypt
- */
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
-}
-
-/**
- * Verify a password against a hash
- */
-export async function verifyPassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
+export { hashPassword, verifyPassword, loginWithPassword, registerUser } from "@repo/db/auth";
 
 /**
  * Get the current user from the session
@@ -72,16 +54,11 @@ export async function requireAuth(request: Request): Promise<SessionUser> {
  */
 export async function createUserSession(
   userId: string,
-  redirectTo: string
+  redirectTo: string,
 ): Promise<Response> {
   const session = await getSession();
   session.set("userId", userId);
 
-  // Create session record in database
-  // TODO: Add a remember me option to the login form
-  // If remember me is checked, set the expiresAt to 30 days
-  // If remember me is not checked, set the expiresAt to 3 hours
-  // For now, we will set the expiresAt to 3 hours
   const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
   await db.session.create({
     data: {
@@ -106,7 +83,6 @@ export async function logout(request: Request): Promise<Response> {
   const session = await getSession(request.headers.get("Cookie"));
   const userId = session.get("userId");
 
-  // Delete all sessions for this user (optional: could delete just the current one)
   if (userId) {
     await db.session.deleteMany({
       where: { userId },
@@ -120,93 +96,4 @@ export async function logout(request: Request): Promise<Response> {
       "Set-Cookie": await destroySession(session),
     },
   });
-}
-
-/**
- * Register a new user with email and password
- */
-export async function registerUser(data: {
-  email: string;
-  username: string;
-  displayName: string;
-  password: string;
-}): Promise<{ user: SessionUser } | { error: string }> {
-  // Check if email already exists
-  const existingEmail = await db.user.findUnique({
-    where: { email: data.email },
-  });
-
-  if (existingEmail) {
-    return { error: "An account with this email already exists" };
-  }
-
-  // Check if username already exists
-  const existingUsername = await db.user.findUnique({
-    where: { username: data.username },
-  });
-
-  if (existingUsername) {
-    return { error: "This username is already taken" };
-  }
-
-  // Hash password and create user
-  const passwordHash = await hashPassword(data.password);
-
-  const user = await db.user.create({
-    data: {
-      email: data.email,
-      username: data.username,
-      displayName: data.displayName,
-      passwordHash,
-      accounts: {
-        create: {
-          provider: "credentials",
-          providerAccountId: data.email,
-        },
-      },
-    },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatar: true,
-    },
-  });
-
-  return { user };
-}
-
-/**
- * Login with email and password
- */
-export async function loginWithPassword(data: {
-  email: string;
-  password: string;
-}): Promise<{ user: SessionUser } | { error: string }> {
-  const user = await db.user.findUnique({
-    where: { email: data.email },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatar: true,
-      passwordHash: true,
-    },
-  });
-
-  if (!user || !user.passwordHash) {
-    return { error: "Invalid email or password" };
-  }
-
-  const isValid = await verifyPassword(data.password, user.passwordHash);
-
-  if (!isValid) {
-    return { error: "Invalid email or password" };
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash, ...userWithoutPassword } = user;
-  return { user: userWithoutPassword };
 }

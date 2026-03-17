@@ -100,8 +100,6 @@ Using AI Agents for accelerated development with clear specifications and iterat
 
 ## Out of Scope (for now)
 
-- Social network features (likes, follows, feeds)
 - Real-time collaboration
-- Mobile native apps (web-first approach)
 - Booking integrations
 - Route planning/optimization

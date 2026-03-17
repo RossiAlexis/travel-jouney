@@ -22,8 +22,8 @@ const tripsSchema = z
       title: z.string(),
       description: z.string(),
       coverImage: z.string().nullable(),
-      startDate: z.date().optional().nullable(),
-      endDate: z.date().optional().nullable(),
+      startDate: z.date(),
+      endDate: z.date().nullable().optional(),
       status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]),
       _count: z.object({
         memories: z.number(),
@@ -173,8 +173,8 @@ interface TripCardProps {
     title: string;
     description: string | null;
     coverImage: string | null;
-    startDate: Date | string;
-    endDate: Date | string | undefined;
+    startDate: Date;
+    endDate: Date | null | undefined;
     status: TripStatus;
     memories: number;
   };

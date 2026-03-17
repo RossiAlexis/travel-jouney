@@ -1,0 +1,28 @@
+{
+  "name": "@repo/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth": "./src/auth.ts"
+  },
+  "scripts": {
+    "postinstall": "prisma generate --schema ./prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema ./prisma/schema.prisma",
+    "db:push": "prisma db push --schema ./prisma/schema.prisma",
+    "db:studio": "prisma studio --schema ./prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@repo/tsconfig": "workspace:*",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/pg": "^8.11.6",
+    "prisma": "^7.2.0",
+    "typescript": "^5.9.2"
+  }
+}
