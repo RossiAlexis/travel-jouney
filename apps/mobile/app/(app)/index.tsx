@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Pressable, Image } from "react-native";
 import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
 import { ScreenLayout } from "../../src/components/ScreenLayout";
 import {
   Card,
@@ -130,7 +131,12 @@ const STATUS_LABELS: Record<string, string> = {
 
 function TripCard({ trip }: { trip: TripWithCount }) {
   return (
-    <Pressable onPress={() => router.push(`/(app)/trip/${trip.id}`)}>
+    <Pressable
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+        router.push(`/(app)/trip/${trip.id}`)
+      }}
+    >
       <Card style={styles.tripCard}>
         {/* Cover image */}
         <View style={styles.coverImage}>

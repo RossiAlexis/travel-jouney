@@ -109,9 +109,12 @@ export default function TripDetailScreen() {
           <Button
             size="sm"
             variant="outline"
-            onPress={() => {
-              // Navigate to new memory screen (implement as needed)
-            }}
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/trip/memory/new',
+                params: { tripId: id },
+              })
+            }
           >
             + Add
           </Button>
