@@ -37,6 +37,7 @@
     "@react-router/node": "7.12.0",
     "@react-router/serve": "7.12.0",
     "@repo/db": "workspace:*",
+    "@repo/services": "workspace:*",
     "@repo/types": "workspace:*",
     "@types/leaflet": "^1.9.21",
     "bcryptjs": "^3.0.3",

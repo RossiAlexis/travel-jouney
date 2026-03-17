@@ -44,6 +44,19 @@ export default [
     route("trips/:tripId/expenses", "pages/trips/expenses.tsx"),
   ]),
 
+  // API resource routes — mobile JSON API (Bearer JWT auth)
+  route("api/auth/login", "routes/api.auth.login.ts"),
+  route("api/auth/register", "routes/api.auth.register.ts"),
+  route("api/auth/refresh", "routes/api.auth.refresh.ts"),
+  route("api/auth/logout", "routes/api.auth.logout.ts"),
+  route("api/auth/me", "routes/api.auth.me.ts"),
+
+  // Trips API
+  route("api/trips", "routes/api.trips.ts"),
+  route("api/trips/:tripId", "routes/api.trips.$tripId.ts"),
+  route("api/trips/:tripId/stats", "routes/api.trips.$tripId.stats.ts"),
+  route("api/trips/:tripId/export/json", "routes/api.trips.$tripId.export.json.ts"),
+
   // Public profile and trip views
   route(":username", "pages/public/user-profile.tsx"),
   route(":username/:tripSlug", "pages/public/trip-public.tsx"),
