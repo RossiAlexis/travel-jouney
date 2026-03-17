@@ -27,6 +27,12 @@
     "start": {
       "cache": false,
       "persistent": true
+    },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "env": ["DATABASE_URL", "SESSION_SECRET", "JWT_SECRET", "CI"],
+      "outputs": ["playwright-report/**", "test-results/**"]
     }
   }
 }

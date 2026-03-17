@@ -4,3 +4,8 @@ build/
 
 # Prisma
 generated/prisma
+
+# Playwright
+playwright/.auth/
+playwright-report/
+test-results/
