@@ -14,11 +14,14 @@ function getSecret() {
   return new TextEncoder().encode(secret);
 }
 
-export async function signToken(payload: TokenPayload): Promise<string> {
+export async function signToken(
+  payload: TokenPayload,
+  expiresIn: string = "15m",
+): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("30d")
+    .setExpirationTime(expiresIn)
     .sign(getSecret());
 }
 

@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import { db } from "@repo/db";
 import { authMiddleware } from "../middleware/auth.js";
 import type { TokenPayload } from "../lib/jwt.js";
@@ -8,6 +10,24 @@ type Variables = { user: TokenPayload };
 const expenses = new Hono<{ Variables: Variables }>();
 
 expenses.use("*", authMiddleware);
+
+const createExpenseSchema = z.object({
+  amount: z.number().positive(),
+  currency: z.string().length(3),
+  category: z.enum([
+    "ACCOMMODATION",
+    "FOOD",
+    "TRANSPORT",
+    "ACTIVITIES",
+    "SHOPPING",
+    "OTHER",
+  ]),
+  description: z.string().min(1).max(500),
+  date: z.string().refine((v) => !isNaN(Date.parse(v)), {
+    message: "Invalid date",
+  }),
+  memoryId: z.string().optional(),
+});
 
 expenses.get("/", async (c) => {
   const user = c.get("user");
@@ -32,7 +52,7 @@ expenses.get("/", async (c) => {
   return c.json({ expenses: data, totals });
 });
 
-expenses.post("/", async (c) => {
+expenses.post("/", zValidator("json", createExpenseSchema), async (c) => {
   const user = c.get("user");
   const { tripId } = c.req.param();
 
@@ -41,21 +61,7 @@ expenses.post("/", async (c) => {
   });
   if (!trip) return c.json({ error: "Trip not found" }, 404);
 
-  const body = await c.req.json<{
-    amount: number;
-    currency: string;
-    category: string;
-    description: string;
-    date: string;
-    memoryId?: string;
-  }>();
-
-  if (!body.amount || !body.currency || !body.category || !body.description || !body.date) {
-    return c.json(
-      { error: "amount, currency, category, description, and date are required" },
-      400,
-    );
-  }
+  const body = c.req.valid("json");
 
   const expense = await db.expense.create({
     data: {

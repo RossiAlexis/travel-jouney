@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import { db } from "@repo/db";
 import { authMiddleware } from "../middleware/auth.js";
 import type { TokenPayload } from "../lib/jwt.js";
@@ -8,6 +10,33 @@ type Variables = { user: TokenPayload };
 const memories = new Hono<{ Variables: Variables }>();
 
 memories.use("*", authMiddleware);
+
+const createMemorySchema = z.object({
+  title: z.string().min(1).max(200),
+  content: z.string().min(1),
+  date: z.string().refine((v) => !isNaN(Date.parse(v)), {
+    message: "Invalid date",
+  }),
+  locationName: z.string().optional(),
+  locationAddress: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  placeId: z.string().optional(),
+  category: z
+    .enum([
+      "ACCOMMODATION",
+      "FOOD",
+      "ACTIVITY",
+      "TRANSPORT",
+      "REFLECTION",
+      "OTHER",
+    ])
+    .optional(),
+  rating: z.number().int().min(1).max(5).optional(),
+  isPublic: z.boolean().optional(),
+});
+
+const updateMemorySchema = createMemorySchema.partial();
 
 function generateSlug(title: string): string {
   return title
@@ -44,7 +73,7 @@ memories.get("/", async (c) => {
   return c.json(data);
 });
 
-memories.post("/", async (c) => {
+memories.post("/", zValidator("json", createMemorySchema), async (c) => {
   const user = c.get("user");
   const { tripId } = c.req.param();
 
@@ -53,22 +82,7 @@ memories.post("/", async (c) => {
   });
   if (!trip) return c.json({ error: "Trip not found" }, 404);
 
-  const body = await c.req.json<{
-    title: string;
-    content: string;
-    date: string;
-    locationName?: string;
-    locationAddress?: string;
-    latitude?: number;
-    longitude?: number;
-    category?: string;
-    rating?: number;
-    isPublic?: boolean;
-  }>();
-
-  if (!body.title || !body.content || !body.date) {
-    return c.json({ error: "title, content, and date are required" }, 400);
-  }
+  const body = c.req.valid("json");
 
   const slug = await uniqueSlug(tripId, generateSlug(body.title));
 
@@ -106,52 +120,45 @@ memories.get("/:memoryId", async (c) => {
   return c.json(memory);
 });
 
-memories.put("/:memoryId", async (c) => {
-  const user = c.get("user");
-  const { tripId, memoryId } = c.req.param();
+memories.put(
+  "/:memoryId",
+  zValidator("json", updateMemorySchema),
+  async (c) => {
+    const user = c.get("user");
+    const { tripId, memoryId } = c.req.param();
 
-  const existing = await db.memory.findFirst({
-    where: { id: memoryId, tripId, userId: user.id },
-  });
-  if (!existing) return c.json({ error: "Memory not found" }, 404);
+    const existing = await db.memory.findFirst({
+      where: { id: memoryId, tripId, userId: user.id },
+    });
+    if (!existing) return c.json({ error: "Memory not found" }, 404);
 
-  const body = await c.req.json<{
-    title?: string;
-    content?: string;
-    date?: string;
-    locationName?: string;
-    locationAddress?: string;
-    latitude?: number;
-    longitude?: number;
-    category?: string;
-    rating?: number;
-    isPublic?: boolean;
-  }>();
+    const body = c.req.valid("json");
 
-  const memory = await db.memory.update({
-    where: { id: memoryId },
-    data: {
-      ...(body.title !== undefined && { title: body.title }),
-      ...(body.content !== undefined && { content: body.content }),
-      ...(body.date !== undefined && { date: new Date(body.date) }),
-      ...(body.locationName !== undefined && {
-        locationName: body.locationName,
-      }),
-      ...(body.locationAddress !== undefined && {
-        locationAddress: body.locationAddress,
-      }),
-      ...(body.latitude !== undefined && { latitude: body.latitude }),
-      ...(body.longitude !== undefined && { longitude: body.longitude }),
-      ...(body.category !== undefined && {
-        category: body.category as never,
-      }),
-      ...(body.rating !== undefined && { rating: body.rating }),
-      ...(body.isPublic !== undefined && { isPublic: body.isPublic }),
-    },
-  });
+    const memory = await db.memory.update({
+      where: { id: memoryId },
+      data: {
+        ...(body.title !== undefined && { title: body.title }),
+        ...(body.content !== undefined && { content: body.content }),
+        ...(body.date !== undefined && { date: new Date(body.date) }),
+        ...(body.locationName !== undefined && {
+          locationName: body.locationName,
+        }),
+        ...(body.locationAddress !== undefined && {
+          locationAddress: body.locationAddress,
+        }),
+        ...(body.latitude !== undefined && { latitude: body.latitude }),
+        ...(body.longitude !== undefined && { longitude: body.longitude }),
+        ...(body.category !== undefined && {
+          category: body.category as never,
+        }),
+        ...(body.rating !== undefined && { rating: body.rating }),
+        ...(body.isPublic !== undefined && { isPublic: body.isPublic }),
+      },
+    });
 
-  return c.json(memory);
-});
+    return c.json(memory);
+  },
+);
 
 memories.delete("/:memoryId", async (c) => {
   const user = c.get("user");

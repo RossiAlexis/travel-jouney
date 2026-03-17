@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { db } from "./index.js";
 import type { SessionUser } from "./index.js";
 
@@ -93,4 +94,38 @@ export async function loginWithPassword(data: {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passwordHash, ...userWithoutPassword } = user;
   return { user: userWithoutPassword };
+}
+
+export async function createRefreshToken(userId: string): Promise<string> {
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  await db.refreshToken.create({
+    data: { userId, token, expiresAt },
+  });
+  return token;
+}
+
+export async function verifyRefreshToken(
+  token: string,
+): Promise<string | null> {
+  const record = await db.refreshToken.findUnique({
+    where: { token },
+    include: { user: true },
+  });
+  if (!record) return null;
+  if (record.expiresAt < new Date()) {
+    await db.refreshToken.delete({ where: { token } });
+    return null;
+  }
+  return record.userId;
+}
+
+export async function revokeRefreshToken(token: string): Promise<void> {
+  await db.refreshToken.deleteMany({ where: { token } });
+}
+
+export async function revokeAllUserRefreshTokens(
+  userId: string,
+): Promise<void> {
+  await db.refreshToken.deleteMany({ where: { userId } });
 }

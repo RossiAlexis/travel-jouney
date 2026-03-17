@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
+import { z } from "zod";
 import { db } from "@repo/db";
 import { authMiddleware } from "../middleware/auth.js";
 import type { TokenPayload } from "../lib/jwt.js";
@@ -8,6 +10,25 @@ type Variables = { user: TokenPayload };
 const trips = new Hono<{ Variables: Variables }>();
 
 trips.use("*", authMiddleware);
+
+const createTripSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().optional(),
+  startDate: z.string().refine((v) => !isNaN(Date.parse(v)), {
+    message: "Invalid date",
+  }),
+  endDate: z
+    .string()
+    .refine((v) => !isNaN(Date.parse(v)), { message: "Invalid date" })
+    .optional(),
+  status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]).optional(),
+  budget: z.number().positive().optional(),
+  currency: z.string().length(3).optional(),
+});
+
+const updateTripSchema = createTripSchema.partial().extend({
+  isPublic: z.boolean().optional(),
+});
 
 trips.get("/", async (c) => {
   const user = c.get("user");
@@ -23,21 +44,9 @@ trips.get("/", async (c) => {
   return c.json(data);
 });
 
-trips.post("/", async (c) => {
+trips.post("/", zValidator("json", createTripSchema), async (c) => {
   const user = c.get("user");
-  const body = await c.req.json<{
-    title: string;
-    description?: string;
-    startDate: string;
-    endDate?: string;
-    status?: "PLANNED" | "ONGOING" | "COMPLETED";
-    budget?: number;
-    currency?: string;
-  }>();
-
-  if (!body.title || !body.startDate) {
-    return c.json({ error: "title and startDate are required" }, 400);
-  }
+  const body = c.req.valid("json");
 
   const trip = await db.trip.create({
     data: {
@@ -74,19 +83,10 @@ trips.get("/:tripId", async (c) => {
   return c.json(trip);
 });
 
-trips.put("/:tripId", async (c) => {
+trips.put("/:tripId", zValidator("json", updateTripSchema), async (c) => {
   const user = c.get("user");
   const { tripId } = c.req.param();
-  const body = await c.req.json<{
-    title?: string;
-    description?: string;
-    startDate?: string;
-    endDate?: string;
-    status?: "PLANNED" | "ONGOING" | "COMPLETED";
-    budget?: number;
-    currency?: string;
-    isPublic?: boolean;
-  }>();
+  const body = c.req.valid("json");
 
   const existing = await db.trip.findFirst({
     where: { id: tripId, userId: user.id },
