@@ -84,6 +84,9 @@ importers:
       expo-font:
         specifier: ~14.0.0
         version: 14.0.11(expo@54.0.33)(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4)
+      expo-haptics:
+        specifier: ^55.0.8
+        version: 55.0.8(expo@54.0.33)
       expo-image:
         specifier: ~3.0.0
         version: 3.0.11(expo@54.0.33)(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4)
@@ -181,7 +184,13 @@ importers:
       '@conform-to/zod':
         specifier: ^1.15.1
         version: 1.17.1(zod@4.3.6)
+      '@fontsource-variable/inter':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@fontsource-variable/jetbrains-mono':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@fontsource-variable/playfair-display':
         specifier: ^5.2.8
         version: 5.2.8
       '@hookform/resolvers':
@@ -238,6 +247,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.3.1
+      framer-motion:
+        specifier: ^12.37.0
+        version: 12.37.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       isbot:
         specifier: ^5.1.31
         version: 5.1.35
@@ -1352,8 +1364,14 @@ packages:
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
+  '@fontsource-variable/inter@5.2.8':
+    resolution: {integrity: sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==}
+
   '@fontsource-variable/jetbrains-mono@5.2.8':
     resolution: {integrity: sha512-WBA9elru6Jdp5df2mES55wuOO0WIrn3kpXnI4+W2ek5u3ZgLS9XS4gmIlcQhiZOWEKl95meYdvK7xI+ETLCq/Q==}
+
+  '@fontsource-variable/playfair-display@5.2.8':
+    resolution: {integrity: sha512-ZzVIXPOrL85yyOvZYoBzUszIJM+xKkHqni4IYn2CVLaGQQdJR8sBeC8yFNgjxSJ7ludTwta8qpULeOFuk5X75A==}
 
   '@gluestack-ui/nativewind-utils@1.0.28':
     resolution: {integrity: sha512-POWYUK99Y9zRbDbTv0/FF6YtPmymaAmqgWKU3QYFjraK3HPAgF9HjovJVEN8SycEDylJAnACw53AoHFQ3Bxh+A==}
@@ -3951,6 +3969,11 @@ packages:
       react: '*'
       react-native: '*'
 
+  expo-haptics@55.0.8:
+    resolution: {integrity: sha512-yVR6EsQwl1WuhFITc0PpfI/7dsBdjK/F2YA8xB80UUW9iTa+Tqz21FpH4n/vtbargpzFxkhl5WNYMa419+QWFQ==}
+    peerDependencies:
+      expo: '*'
+
   expo-image-loader@6.0.0:
     resolution: {integrity: sha512-nKs/xnOGw6ACb4g26xceBD57FKLFkSwEUTDXEDF3Gtcu3MqF3ZIYd3YM+sSb1/z9AKV1dYT7rMSGVNgsveXLIQ==}
     peerDependencies:
@@ -4194,6 +4217,20 @@ packages:
   forwarded@0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
+
+  framer-motion@12.37.0:
+    resolution: {integrity: sha512-j/QUcZS9Nw3NzZWoAbkzr3ETRFHyVeQMlGOUYUmG15U+uiyn9DqIktYruVPDcqY8I35qYR70JaZBvFmS6p+Pdg==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
 
   freeport-async@2.0.0:
     resolution: {integrity: sha512-K7od3Uw45AJg00XUmy15+Hae2hOcgKcmN3/EF6Y7i01O0gaqiRx8sUSpsb9+BRNL8RPBrhzPsVfy8q9ADlJuWQ==}
@@ -5287,6 +5324,12 @@ packages:
   morgan@1.10.1:
     resolution: {integrity: sha512-223dMRJtI/l25dJKWpgij2cMtywuG/WiUKXdvwfbhGKBhy1puASqXwFzmWZ7+K73vUPoR7SS2Qz2cI/g9MKw0A==}
     engines: {node: '>= 0.8.0'}
+
+  motion-dom@12.37.0:
+    resolution: {integrity: sha512-LnppZuwX1jQizRWTl9LBLMN3RbAEmdQkX/2Af0UW70NCqYJI/7GfI83vQP9Ucel/Avc0Tf2ZWy8FHawuc0O6Vg==}
+
+  motion-utils@12.36.0:
+    resolution: {integrity: sha512-eHWisygbiwVvf6PZ1vhaHCLamvkSbPIeAYxWUuL3a2PD/TROgE7FvfHWTIH4vMl798QLfMw15nRqIaRDXTlYRg==}
 
   ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
@@ -8331,7 +8374,11 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
+  '@fontsource-variable/inter@5.2.8': {}
+
   '@fontsource-variable/jetbrains-mono@5.2.8': {}
+
+  '@fontsource-variable/playfair-display@5.2.8': {}
 
   '@gluestack-ui/nativewind-utils@1.0.28(nativewind@4.2.2(react-native-reanimated@4.1.6(@babel/core@7.29.0)(react-native-worklets@0.5.1(@babel/core@7.29.0)(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4))(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4))(react-native-safe-area-context@5.6.2(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4))(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4)(tailwindcss@3.4.17))(react@19.1.4)(tailwindcss@3.4.17)':
     dependencies:
@@ -11281,6 +11328,10 @@ snapshots:
       react: 19.1.4
       react-native: 0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4)
 
+  expo-haptics@55.0.8(expo@54.0.33):
+    dependencies:
+      expo: 54.0.33(@babel/core@7.29.0)(@expo/dom-webview@55.0.3)(@expo/metro-runtime@5.0.5(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4)))(expo-router@5.1.11)(graphql@16.13.0)(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4)
+
   expo-image-loader@6.0.0(expo@54.0.33):
     dependencies:
       expo: 54.0.33(@babel/core@7.29.0)(@expo/dom-webview@55.0.3)(@expo/metro-runtime@5.0.5(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4)))(expo-router@5.1.11)(graphql@16.13.0)(react-native@0.81.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.1.4))(react@19.1.4)
@@ -11626,6 +11677,15 @@ snapshots:
       fetch-blob: 3.2.0
 
   forwarded@0.2.0: {}
+
+  framer-motion@12.37.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      motion-dom: 12.37.0
+      motion-utils: 12.36.0
+      tslib: 2.8.1
+    optionalDependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   freeport-async@2.0.0: {}
 
@@ -12840,6 +12900,12 @@ snapshots:
       on-headers: 1.1.0
     transitivePeerDependencies:
       - supports-color
+
+  motion-dom@12.37.0:
+    dependencies:
+      motion-utils: 12.36.0
+
+  motion-utils@12.36.0: {}
 
   ms@2.0.0: {}
 
