@@ -21,7 +21,7 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Edit Profile - Travel Journal" },
+    { title: "Edit Profile — Bitácora de Viaje" },
     { name: "description", content: "Edit your profile settings" },
   ];
 }

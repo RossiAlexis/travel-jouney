@@ -9,11 +9,11 @@ import type { MemoryCategory } from "~/types";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.memory) {
-    return [{ title: "Memory Not Found - Travel Journal" }];
+    return [{ title: "Memory Not Found - Bitácora de Viaje" }];
   }
   return [
     {
-      title: `${data.memory.title} - ${data.trip.title} by ${data.user.displayName} - Travel Journal`,
+      title: `${data.memory.title} - ${data.trip.title} by ${data.user.displayName} - Bitácora de Viaje`,
     },
     { name: "description", content: data.memory.content.slice(0, 160) },
   ];
@@ -204,7 +204,7 @@ export default function MemoryPublic({ loaderData }: Route.ComponentProps) {
           <p className="text-muted-foreground text-sm">
             Powered by{" "}
             <Link to="/" className="text-primary hover:underline">
-              Travel Journal
+              Bitácora de Viaje
             </Link>
           </p>
         </div>

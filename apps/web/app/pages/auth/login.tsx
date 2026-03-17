@@ -25,8 +25,8 @@ import { MapPin, AlertCircle } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Login - Travel Journal" },
-    { name: "description", content: "Log in to your Travel Journal account" },
+    { title: "Login — Bitácora de Viaje" },
+    { name: "description", content: "Log in to your Bitácora de Viaje account" },
   ];
 }
 

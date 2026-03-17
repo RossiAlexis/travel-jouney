@@ -37,12 +37,12 @@ import * as z from "zod";
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData?.trip) {
     return [
-      { title: "Trip Not Found - Travel Journal" },
+      { title: "Trip Not Found — Bitácora de Viaje" },
       { name: "description", content: "Trip not found" },
     ];
   }
   return [
-    { title: `${loaderData.trip.title} - Travel Journal` },
+    { title: `${loaderData.trip.title} — Bitácora de Viaje` },
     {
       name: "description",
       content: loaderData.trip.description || "View trip details",

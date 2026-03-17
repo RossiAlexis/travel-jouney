@@ -21,8 +21,8 @@ import { MapPin, AlertCircle } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Sign Up - Travel Journal" },
-    { name: "description", content: "Create your Travel Journal account" },
+    { title: "Sign Up — Bitácora de Viaje" },
+    { name: "description", content: "Create your Bitácora de Viaje account" },
   ];
 }
 

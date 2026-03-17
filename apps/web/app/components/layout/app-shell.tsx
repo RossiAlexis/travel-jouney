@@ -44,7 +44,7 @@ export default function AppShell({ loaderData }: Route.ComponentProps) {
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center gap-2">
             <MapPin className="text-primary h-6 w-6" />
-            <span className="text-xl font-bold">Travel Journal</span>
+            <span className="text-xl font-bold">Bitácora de Viaje</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -176,7 +176,7 @@ export default function AppShell({ loaderData }: Route.ComponentProps) {
       <footer className="border-t">
         <div className="container mx-auto flex h-16 items-center justify-center px-4">
           <p className="text-muted-foreground text-sm">
-            Travel Journal &copy; {new Date().getFullYear()}
+            Bitácora de Viaje &copy; {new Date().getFullYear()}
           </p>
         </div>
       </footer>

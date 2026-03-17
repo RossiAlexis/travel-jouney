@@ -10,7 +10,7 @@ import type { TripStatus } from "~/types";
 import z from "zod";
 export function meta() {
   return [
-    { title: "Dashboard - Travel Journal" },
+    { title: "Dashboard — Bitácora de Viaje" },
     { name: "description", content: "View and manage your travel journals" },
   ];
 }

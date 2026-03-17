@@ -31,12 +31,12 @@ import { z } from "zod";
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.trip) {
     return [
-      { title: "Edit Trip - Travel Journal" },
+      { title: "Edit Trip — Bitácora de Viaje" },
       { name: "description", content: "Edit your trip" },
     ];
   }
   return [
-    { title: `Edit ${data.trip.title} - Travel Journal` },
+    { title: `Edit ${data.trip.title} — Bitácora de Viaje` },
     { name: "description", content: "Edit your trip details" },
   ];
 }

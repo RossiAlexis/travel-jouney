@@ -28,10 +28,10 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.memory) {
-    return [{ title: "Edit Memory - Travel Journal" }];
+    return [{ title: "Edit Memory — Bitácora de Viaje" }];
   }
   return [
-    { title: `Edit ${data.memory.title} - Travel Journal` },
+    { title: `Edit ${data.memory.title} — Bitácora de Viaje` },
     { name: "description", content: "Edit your travel memory" },
   ];
 }

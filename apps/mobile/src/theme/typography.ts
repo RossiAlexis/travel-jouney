@@ -1,22 +1,26 @@
 /**
- * Typography tokens matching the web app.
+ * Typography tokens for Bitácora de Viaje.
  *
- * The web app uses JetBrains Mono Variable for ALL text (overriding
- * --font-sans with the mono font). We mirror this distinctive choice.
+ * Uses Inter for body text and Playfair Display for headings/display text,
+ * matching the web app's premium typographic system.
  *
  * Font sizes and line heights mirror Tailwind's default scale but calibrated
  * for mobile reading at standard device densities.
  */
 
 export const fontFamilies = {
-  // Primary — JetBrains Mono (matches web app's --font-sans override)
-  mono: "JetBrainsMono_400Regular",
-  monoMedium: "JetBrainsMono_500Medium",
-  monoBold: "JetBrainsMono_700Bold",
-
-  // Fallbacks
-  system: "System",
-  monospace: "monospace",
+  display: 'PlayfairDisplay_700Bold',
+  displaySemiBold: 'PlayfairDisplay_600SemiBold',
+  sans: 'Inter_400Regular',
+  sansMedium: 'Inter_500Medium',
+  sansSemiBold: 'Inter_600SemiBold',
+  sansBold: 'Inter_700Bold',
+  mono: 'JetBrainsMono_400Regular',
+  // Keep these for backwards compatibility:
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
 } as const;
 
 export const fontSizes = {

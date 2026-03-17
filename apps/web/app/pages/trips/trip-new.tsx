@@ -28,7 +28,7 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Create Trip - Travel Journal" },
+    { title: "Create Trip — Bitácora de Viaje" },
     { name: "description", content: "Create a new travel trip" },
   ];
 }

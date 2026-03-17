@@ -10,10 +10,10 @@ import type { TripStatus } from "~/types";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.user) {
-    return [{ title: "Profile Not Found - Travel Journal" }];
+    return [{ title: "Profile Not Found - Bitácora de Viaje" }];
   }
   return [
-    { title: `${data.user.displayName} - Travel Journal` },
+    { title: `${data.user.displayName} - Bitácora de Viaje` },
     {
       name: "description",
       content: data.user.bio || `Travel journal of ${data.user.displayName}`,
@@ -198,7 +198,7 @@ export default function UserProfile({ loaderData }: Route.ComponentProps) {
           <p className="text-muted-foreground text-sm">
             Powered by{" "}
             <Link to="/" className="text-primary hover:underline">
-              Travel Journal
+              Bitácora de Viaje
             </Link>
           </p>
         </div>

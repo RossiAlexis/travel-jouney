@@ -22,10 +22,10 @@ import type { MemoryCategory } from "~/types";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.memory) {
-    return [{ title: "Memory - Travel Journal" }];
+    return [{ title: "Memory — Bitácora de Viaje" }];
   }
   return [
-    { title: `${data.memory.title} - Travel Journal` },
+    { title: `${data.memory.title} — Bitácora de Viaje` },
     { name: "description", content: data.memory.content.slice(0, 160) },
   ];
 }

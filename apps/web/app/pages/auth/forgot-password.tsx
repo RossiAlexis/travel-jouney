@@ -20,8 +20,8 @@ import { MapPin, CheckCircle } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Forgot Password - Travel Journal" },
-    { name: "description", content: "Reset your Travel Journal password" },
+    { title: "Forgot Password — Bitácora de Viaje" },
+    { name: "description", content: "Reset your Bitácora de Viaje password" },
   ];
 }
 

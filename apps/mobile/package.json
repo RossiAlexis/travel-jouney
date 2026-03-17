@@ -14,11 +14,12 @@
     "build": "expo export"
   },
   "dependencies": {
-    "@repo/types": "workspace:*",
+    "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.3.0",
+    "@expo-google-fonts/playfair-display": "^0.4.2",
     "@gluestack-ui/nativewind-utils": "^1.0.27",
     "@hookform/resolvers": "^3.9.0",
-    "expo-secure-store": "~14.0.0",
+    "@repo/types": "workspace:*",
     "@tanstack/react-query": "^5.56.2",
     "expo": "~54.0.0",
     "expo-camera": "~17.0.0",
@@ -29,6 +30,7 @@
     "expo-image-picker": "~17.0.0",
     "expo-linking": "~8.0.0",
     "expo-router": "~5.1.0",
+    "expo-secure-store": "~14.0.0",
     "expo-splash-screen": "~31.0.0",
     "expo-status-bar": "~3.0.0",
     "expo-video": "~3.0.0",

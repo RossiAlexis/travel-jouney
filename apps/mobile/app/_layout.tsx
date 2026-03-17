@@ -13,6 +13,17 @@ import {
   JetBrainsMono_500Medium,
   JetBrainsMono_700Bold,
 } from "@expo-google-fonts/jetbrains-mono";
+import {
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_600SemiBold,
+  PlayfairDisplay_700Bold,
+} from "@expo-google-fonts/playfair-display";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 import { useAuthStore } from "../src/stores/authStore";
 
 SplashScreen.preventAutoHideAsync();
@@ -31,6 +42,13 @@ export default function RootLayout() {
     JetBrainsMono_400Regular,
     JetBrainsMono_500Medium,
     JetBrainsMono_700Bold,
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_600SemiBold,
+    PlayfairDisplay_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   const initialize = useAuthStore((s) => s.initialize);

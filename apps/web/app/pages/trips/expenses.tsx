@@ -49,10 +49,10 @@ import type { ExpenseCategory } from "~/types";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.trip) {
-    return [{ title: "Expenses - Travel Journal" }];
+    return [{ title: "Expenses — Bitácora de Viaje" }];
   }
   return [
-    { title: `Expenses - ${data.trip.title} - Travel Journal` },
+    { title: `Expenses - ${data.trip.title} — Bitácora de Viaje` },
     { name: "description", content: "Track your trip expenses" },
   ];
 }

@@ -10,7 +10,7 @@ import { Settings, MapPin, BookOpen, Calendar } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Profile - Travel Journal" },
+    { title: "Profile — Bitácora de Viaje" },
     { name: "description", content: "View your profile" },
   ];
 }

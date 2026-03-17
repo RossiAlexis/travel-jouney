@@ -20,10 +20,10 @@ import { MapPin, AlertCircle } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Reset Password - Travel Journal" },
+    { title: "Reset Password — Bitácora de Viaje" },
     {
       name: "description",
-      content: "Set a new password for your Travel Journal account",
+      content: "Set a new password for your Bitácora de Viaje account",
     },
   ];
 }

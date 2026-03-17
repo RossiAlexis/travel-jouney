@@ -15,10 +15,10 @@ import type { TripStatus, MemoryCategory } from "~/types";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.trip) {
-    return [{ title: "Trip Not Found - Travel Journal" }];
+    return [{ title: "Trip Not Found - Bitácora de Viaje" }];
   }
   return [
-    { title: `${data.trip.title} by ${data.user.displayName} - Travel Journal` },
+    { title: `${data.trip.title} by ${data.user.displayName} - Bitácora de Viaje` },
     {
       name: "description",
       content: data.trip.description || `${data.trip.title} travel journal`,
@@ -276,7 +276,7 @@ export default function TripPublic({ loaderData }: Route.ComponentProps) {
           <p className="text-muted-foreground text-sm">
             Powered by{" "}
             <Link to="/" className="text-primary hover:underline">
-              Travel Journal
+              Bitácora de Viaje
             </Link>
           </p>
         </div>
