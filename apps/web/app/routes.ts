@@ -45,29 +45,29 @@ export default [
   ]),
 
   // API resource routes — mobile JSON API (Bearer JWT auth)
-  route("api/auth/login", "routes/api.auth.login.ts"),
-  route("api/auth/register", "routes/api.auth.register.ts"),
-  route("api/auth/refresh", "routes/api.auth.refresh.ts"),
-  route("api/auth/logout", "routes/api.auth.logout.ts"),
-  route("api/auth/me", "routes/api.auth.me.ts"),
+  route("api/auth/login", "routes/api/auth/login.ts"),
+  route("api/auth/register", "routes/api/auth/register.ts"),
+  route("api/auth/refresh", "routes/api/auth/refresh.ts"),
+  route("api/auth/logout", "routes/api/auth/logout.ts"),
+  route("api/auth/me", "routes/api/auth/me.ts"),
 
   // Trips API
-  route("api/trips", "routes/api.trips.ts"),
-  route("api/trips/:tripId", "routes/api.trips.$tripId.ts"),
-  route("api/trips/:tripId/stats", "routes/api.trips.$tripId.stats.ts"),
-  route("api/trips/:tripId/export/json", "routes/api.trips.$tripId.export.json.ts"),
+  route("api/trips", "routes/api/trips/index.ts"),
+  route("api/trips/:tripId", "routes/api/trips/$tripId/index.ts"),
+  route("api/trips/:tripId/stats", "routes/api/trips/$tripId/stats.ts"),
+  route("api/trips/:tripId/export/json", "routes/api/trips/$tripId/export/json.ts"),
 
   // Memories API
-  route("api/trips/:tripId/memories/search", "routes/api.trips.$tripId.memories.search.ts"),
-  route("api/trips/:tripId/memories", "routes/api.trips.$tripId.memories.ts"),
-  route("api/trips/:tripId/memories/:memoryId", "routes/api.trips.$tripId.memories.$memoryId.ts"),
+  route("api/trips/:tripId/memories/search", "routes/api/trips/$tripId/memories/search.ts"),
+  route("api/trips/:tripId/memories", "routes/api/trips/$tripId/memories/index.ts"),
+  route("api/trips/:tripId/memories/:memoryId", "routes/api/trips/$tripId/memories/$memoryId.ts"),
 
   // Expenses API
-  route("api/trips/:tripId/expenses", "routes/api.trips.$tripId.expenses.ts"),
-  route("api/trips/:tripId/expenses/:expenseId", "routes/api.trips.$tripId.expenses.$expenseId.ts"),
+  route("api/trips/:tripId/expenses", "routes/api/trips/$tripId/expenses/index.ts"),
+  route("api/trips/:tripId/expenses/:expenseId", "routes/api/trips/$tripId/expenses/$expenseId.ts"),
 
   // Profile API
-  route("api/me", "routes/api.me.ts"),
+  route("api/me", "routes/api/me.ts"),
 
   // Public profile and trip views
   route(":username", "pages/public/user-profile.tsx"),
