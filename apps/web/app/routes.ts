@@ -31,6 +31,7 @@ export default [
 
     // Trip routes
     route("trips/new", "pages/trips/trip-new.tsx"),
+    route("trips/:tripId/export/json", "pages/trips/trip-export.tsx"),
     route("trips/:tripId", "pages/trips/trip-detail.tsx"),
     route("trips/:tripId/edit", "pages/trips/trip-edit.tsx"),
 

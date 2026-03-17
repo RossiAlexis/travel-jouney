@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useFetcher, data, redirect } from "react-router";
 import type { Route } from "./+types/trip-detail";
 import { requireAuth } from "~/lib/auth.server";
@@ -21,9 +21,11 @@ import {
   ArrowLeft,
   BarChart2,
   DollarSign,
+  Download,
   MapPin,
   Pencil,
   Plus,
+  Search,
   Trash2,
   BookOpen,
   Image,
@@ -64,6 +66,7 @@ const tripDetailSchema = z.object({
     z.object({
       id: z.string(),
       title: z.string(),
+      content: z.string().nullable(),
       date: z.date(),
       category: z.enum([
         "ACCOMMODATION",
@@ -213,6 +216,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
   const deleteFetcher = useFetcher();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isDeleting = deleteFetcher.state === "submitting";
+  const [searchQuery, setSearchQuery] = useState("");
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
@@ -235,8 +239,16 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
     }))
   );
 
+  // Filter memories client-side based on searchQuery
+  const displayMemories = searchQuery.trim().length >= 2
+    ? trip.memories.filter(m =>
+        m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (m.content?.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : trip.memories;
+
   // Group memories by calendar day
-  const memoriesByDay = trip.memories.reduce(
+  const memoriesByDay = displayMemories.reduce(
     (acc, memory) => {
       const dayKey = new Date(memory.date).toLocaleDateString("en-US", {
         weekday: "long",
@@ -247,7 +259,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
       acc[dayKey].push(memory);
       return acc;
     },
-    {} as Record<string, typeof trip.memories>
+    {} as Record<string, typeof displayMemories>
   );
 
   const dayGroups = Object.entries(memoriesByDay);
@@ -358,6 +370,14 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
           </Button>
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href={`/trips/${trip.id}/export/json`}
+            download
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </a>
           <Button asChild variant="ghost" size="sm">
             <Link to={`/trips/${trip.id}/edit`}>
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
@@ -511,7 +531,29 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
               </Button>
             </div>
           ) : (
-            <div className="relative">
+            <div>
+              {/* Search input */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="search"
+                  placeholder="Search memories..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-muted rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground"
+                />
+              </div>
+
+              {searchQuery.length >= 2 && displayMemories.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-10 w-10 text-muted-foreground mb-3 opacity-40" />
+                  <p className="font-display text-base font-semibold mb-1">No results found</p>
+                  <p className="text-muted-foreground text-sm">
+                    No memories match &ldquo;{searchQuery}&rdquo;
+                  </p>
+                </div>
+              ) : (
+              <div className="relative">
               {/* Vertical axis line */}
               <div className="absolute left-[19px] top-6 bottom-6 w-px bg-border" />
 
@@ -540,6 +582,8 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                   </div>
                 ))}
               </div>
+            </div>
+              )}
             </div>
           )}
         </TabsContent>

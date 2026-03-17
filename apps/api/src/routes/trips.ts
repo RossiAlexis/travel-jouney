@@ -202,4 +202,74 @@ trips.get("/:tripId/stats", authMiddleware, async (c) => {
   });
 });
 
+// GET /trips/:tripId/export/json — download trip as JSON
+trips.get("/:tripId/export/json", authMiddleware, async (c) => {
+  const user = c.get("user");
+  const { tripId } = c.req.param();
+
+  const trip = await db.trip.findFirst({
+    where: { id: tripId, userId: user.id },
+    include: {
+      memories: {
+        include: { photos: true },
+        orderBy: { date: "asc" },
+      },
+      expenses: {
+        orderBy: { date: "asc" },
+      },
+    },
+  });
+
+  if (!trip) return c.json({ error: "Trip not found" }, 404);
+
+  const exportData = {
+    exportedAt: new Date().toISOString(),
+    trip: {
+      id: trip.id,
+      title: trip.title,
+      description: trip.description,
+      startDate: trip.startDate,
+      endDate: trip.endDate,
+      status: trip.status,
+      currency: trip.currency,
+      budget: trip.budget,
+      coverImage: trip.coverImage,
+      memoriesCount: trip.memories.length,
+      expensesCount: trip.expenses.length,
+    },
+    memories: trip.memories.map((m) => ({
+      id: m.id,
+      title: m.title,
+      content: m.content,
+      date: m.date,
+      category: m.category,
+      rating: m.rating,
+      locationName: m.locationName,
+      locationAddress: m.locationAddress,
+      latitude: m.latitude,
+      longitude: m.longitude,
+      isPublic: m.isPublic,
+      photos: m.photos.map((p) => ({ url: p.url, thumbnail: p.thumbnail, caption: p.caption })),
+      createdAt: m.createdAt,
+    })),
+    expenses: trip.expenses.map((e) => ({
+      id: e.id,
+      amount: e.amount,
+      currency: e.currency,
+      category: e.category,
+      description: e.description,
+      date: e.date,
+    })),
+  };
+
+  const filename = `${trip.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-export.json`;
+
+  return new Response(JSON.stringify(exportData, null, 2), {
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
+});
+
 export { trips };

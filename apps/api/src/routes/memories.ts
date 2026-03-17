@@ -56,6 +56,66 @@ async function uniqueSlug(tripId: string, base: string): Promise<string> {
   return slug;
 }
 
+// GET /trips/:tripId/memories/search?q=keyword
+memories.get("/search", authMiddleware, async (c) => {
+  const user = c.get("user");
+  const { tripId } = c.req.param();
+  const q = c.req.query("q")?.trim();
+
+  if (!q || q.length < 2) {
+    return c.json({ results: [], query: q ?? "" });
+  }
+
+  const trip = await db.trip.findFirst({
+    where: { id: tripId, userId: user.id },
+  });
+  if (!trip) return c.json({ error: "Trip not found" }, 404);
+
+  // Use Prisma raw query for full-text search
+  // Falls back to ILIKE if search_vector column doesn't exist yet
+  try {
+    const results = await db.$queryRaw<Array<{
+      id: string;
+      title: string;
+      content: string | null;
+      date: Date;
+      category: string;
+      slug: string | null;
+      "locationName": string | null;
+    }>>`
+      SELECT id, title, content, date, category, slug, "locationName"
+      FROM "Memory"
+      WHERE "tripId" = ${tripId}
+        AND "userId" = ${user.id}
+        AND (
+          search_vector @@ plainto_tsquery('english', ${q})
+          OR title ILIKE ${'%' + q + '%'}
+        )
+      ORDER BY
+        CASE WHEN search_vector @@ plainto_tsquery('english', ${q}) THEN 0 ELSE 1 END,
+        date DESC
+      LIMIT 20
+    `;
+    return c.json({ results, query: q });
+  } catch {
+    // Fallback if search_vector column doesn't exist yet (migration not applied)
+    const results = await db.memory.findMany({
+      where: {
+        tripId,
+        userId: user.id,
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { content: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, title: true, content: true, date: true, category: true, slug: true, locationName: true },
+      orderBy: { date: 'desc' },
+      take: 20,
+    });
+    return c.json({ results, query: q });
+  }
+});
+
 memories.get("/", async (c) => {
   const user = c.get("user");
   const { tripId } = c.req.param();

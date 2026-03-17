@@ -1,0 +1,22 @@
+{
+  "name": "@repo/services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./trips": "./src/trips.ts",
+    "./memories": "./src/memories.ts",
+    "./expenses": "./src/expenses.ts"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@repo/types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

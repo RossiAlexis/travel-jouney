@@ -4,7 +4,7 @@ import { MapPin, BookOpen, DollarSign, Share2 } from "lucide-react";
 import React from "react";
 export function meta() {
   return [
-    { title: "Travel Journal - Document Your Adventures" },
+    { title: "Bitácora de Viaje — Document Your Adventures" },
     {
       name: "description",
       content:
@@ -20,7 +20,7 @@ export default function Home() {
       <header className="container mx-auto flex items-center justify-between px-4 py-6">
         <div className="flex items-center gap-2">
           <MapPin className="text-primary h-8 w-8" />
-          <span className="text-2xl font-bold">Travel Journal</span>
+          <span className="text-2xl font-bold">Bitácora de Viaje</span>
         </div>
         <nav className="flex items-center gap-4">
           <Button variant="ghost" asChild>
@@ -89,7 +89,7 @@ export default function Home() {
             Start documenting your journey today
           </h2>
           <p className="mx-auto mb-8 max-w-xl text-lg opacity-90">
-            Join thousands of travelers who use Travel Journal to preserve their
+            Join thousands of travelers who use Bitácora de Viaje to preserve their
             memories and organize their adventures.
           </p>
           <Button size="lg" variant="secondary" asChild>
@@ -102,7 +102,7 @@ export default function Home() {
       <footer className="border-t py-8">
         <div className="text-muted-foreground container mx-auto px-4 text-center text-sm">
           <p>
-            Travel Journal &copy; {new Date().getFullYear()}. All rights
+            Bitácora de Viaje &copy; {new Date().getFullYear()}. All rights
             reserved.
           </p>
         </div>
