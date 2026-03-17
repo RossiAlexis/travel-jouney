@@ -11,7 +11,7 @@
     "format": "turbo format",
     "web:dev": "pnpm --filter @repo/web dev",
     "mobile:dev": "pnpm --filter @repo/mobile start",
-    "api:dev": "pnpm --filter @repo/api dev"
+    "api:dev": "echo 'apps/api has been removed. Use pnpm web:dev — the web server hosts all API routes at /api/*'"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

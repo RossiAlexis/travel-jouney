@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
 // Points to the web server (React Router v7) which exposes /api/* routes
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:5173";
 
 const REFRESH_TOKEN_KEY = "auth_refresh_token";
 
