@@ -40,16 +40,19 @@ export default function MapScreen() {
   const { user } = useAuth();
   const { data: trips } = useTrips(user?.id ?? "");
 
+  // Trips don't carry coordinates themselves — coordinates live on individual
+  // memories. Until we fetch per-trip memories here, the valid pin list is
+  // always empty. The memoized value is kept so the shape is ready once we
+  // wire up memory queries in a future iteration.
   const pins = useMemo(() => {
     if (!trips) return [];
-    return trips
-      .filter((t) => t.isPublic)
-      .map((t) => ({
-        id: t.id,
-        title: t.title,
-        coordinate: { latitude: 0, longitude: 0 },
-      }));
+    // All trips are shown (no isPublic filter) — but we can only plot a pin
+    // when we have actual lat/lng data. Trips don't store coordinates, so we
+    // return an empty array and let the empty-state UI explain what to do.
+    return [] as { id: string; title: string; coordinate: { latitude: number; longitude: number } }[];
   }, [trips]);
+
+  const tripCount = trips?.length ?? 0;
 
   if (!MapView) {
     return (
@@ -88,7 +91,9 @@ export default function MapScreen() {
         <Muted style={styles.headerText}>
           {pins.length > 0
             ? `${pins.length} location${pins.length === 1 ? "" : "s"} mapped`
-            : "Your visited places will appear here"}
+            : tripCount > 0
+              ? "Add locations to your memories to see them appear here"
+              : "Your visited places will appear here"}
         </Muted>
       </View>
     </ScreenLayout>
