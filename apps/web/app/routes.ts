@@ -57,6 +57,18 @@ export default [
   route("api/trips/:tripId/stats", "routes/api.trips.$tripId.stats.ts"),
   route("api/trips/:tripId/export/json", "routes/api.trips.$tripId.export.json.ts"),
 
+  // Memories API
+  route("api/trips/:tripId/memories/search", "routes/api.trips.$tripId.memories.search.ts"),
+  route("api/trips/:tripId/memories", "routes/api.trips.$tripId.memories.ts"),
+  route("api/trips/:tripId/memories/:memoryId", "routes/api.trips.$tripId.memories.$memoryId.ts"),
+
+  // Expenses API
+  route("api/trips/:tripId/expenses", "routes/api.trips.$tripId.expenses.ts"),
+  route("api/trips/:tripId/expenses/:expenseId", "routes/api.trips.$tripId.expenses.$expenseId.ts"),
+
+  // Profile API
+  route("api/me", "routes/api.me.ts"),
+
   // Public profile and trip views
   route(":username", "pages/public/user-profile.tsx"),
   route(":username/:tripSlug", "pages/public/trip-public.tsx"),

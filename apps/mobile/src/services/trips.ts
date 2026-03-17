@@ -10,7 +10,7 @@ export interface TripWithCount extends Trip {
 }
 
 export async function fetchTrips(token: string): Promise<TripWithCount[]> {
-  const data = await apiRequest<TripWithCount[]>("/trips", {}, token);
+  const data = await apiRequest<TripWithCount[]>("/api/trips", {}, token);
   return data.map((trip) => ({
     ...trip,
     memories: trip._count?.memories ?? 0,
@@ -21,14 +21,14 @@ export async function fetchTripById(
   id: string,
   token: string,
 ): Promise<Trip | null> {
-  return apiRequest<Trip>(`/trips/${id}`, {}, token);
+  return apiRequest<Trip>(`/api/trips/${id}`, {}, token);
 }
 
 export async function createTrip(
   trip: Omit<Trip, "id" | "createdAt" | "updatedAt">,
   token: string,
 ): Promise<Trip> {
-  return apiRequest<Trip>("/trips", { method: "POST", body: JSON.stringify(trip) }, token);
+  return apiRequest<Trip>("/api/trips", { method: "POST", body: JSON.stringify(trip) }, token);
 }
 
 export async function updateTrip(
@@ -37,21 +37,21 @@ export async function updateTrip(
   token: string,
 ): Promise<Trip> {
   return apiRequest<Trip>(
-    `/trips/${id}`,
+    `/api/trips/${id}`,
     { method: "PUT", body: JSON.stringify(updates) },
     token,
   );
 }
 
 export async function deleteTrip(id: string, token: string): Promise<void> {
-  await apiRequest(`/trips/${id}`, { method: "DELETE" }, token);
+  await apiRequest(`/api/trips/${id}`, { method: "DELETE" }, token);
 }
 
 export async function fetchMemoriesByTrip(
   tripId: string,
   token: string,
 ): Promise<Memory[]> {
-  return apiRequest<Memory[]>(`/trips/${tripId}/memories`, {}, token);
+  return apiRequest<Memory[]>(`/api/trips/${tripId}/memories`, {}, token);
 }
 
 export async function createMemory(
@@ -59,7 +59,7 @@ export async function createMemory(
   token: string,
 ): Promise<Memory> {
   return apiRequest<Memory>(
-    `/trips/${memory.tripId}/memories`,
+    `/api/trips/${memory.tripId}/memories`,
     { method: "POST", body: JSON.stringify(memory) },
     token,
   );

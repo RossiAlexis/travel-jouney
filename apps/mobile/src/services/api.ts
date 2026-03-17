@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
+// Points to the web server (React Router v7) which exposes /api/* routes
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const REFRESH_TOKEN_KEY = "auth_refresh_token";
@@ -44,7 +45,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     const refreshToken = await getStoredRefreshToken();
     if (!refreshToken) return null;
 
-    const response = await fetch(`${API_URL}/auth/refresh`, {
+    const response = await fetch(`${API_URL}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),

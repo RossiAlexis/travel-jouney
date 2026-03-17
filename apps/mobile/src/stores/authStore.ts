@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       const data = await apiRequest<{ user: SessionUser }>(
-        "/auth/me",
+        "/api/auth/me",
         {},
         token,
         (newToken) => get().updateToken(newToken),
@@ -77,7 +77,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         token: string;
         refreshToken: string;
         user: SessionUser;
-      }>("/auth/login", {
+      }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
@@ -98,7 +98,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         token: string;
         refreshToken: string;
         user: SessionUser;
-      }>("/auth/register", {
+      }>("/api/auth/register", {
         method: "POST",
         body: JSON.stringify({ email, password, username, displayName }),
       });
