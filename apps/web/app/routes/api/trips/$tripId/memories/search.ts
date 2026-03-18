@@ -1,12 +1,6 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
 import { searchMemories, ServiceError } from "@repo/services";
-
-function json<T>(data: T, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+import { apiResponse } from "~/lib/response.server";
 
 export async function loader({
   request,
@@ -18,12 +12,12 @@ export async function loader({
   const user = await requireApiAuth(request);
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.trim() ?? "";
-  if (q.length < 2) return json({ results: [], query: q });
+  if (q.length < 2) return apiResponse({ results: [], query: q }, 200, request);
   try {
     const result = await searchMemories(params.tripId, user.id, q);
-    return json(result);
+    return apiResponse(result, 200, request);
   } catch (err) {
-    if (err instanceof ServiceError) return json({ error: err.message }, err.status);
+    if (err instanceof ServiceError) return apiResponse({ error: err.message }, err.status, request);
     throw err;
   }
 }

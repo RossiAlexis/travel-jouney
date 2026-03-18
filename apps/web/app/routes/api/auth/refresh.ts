@@ -1,17 +1,24 @@
 import { verifyRefreshToken, revokeRefreshToken, createRefreshToken } from "@repo/db/auth";
 import { db } from "~/lib/db.server";
 import { signToken } from "~/lib/jwt.server";
-
-function json<T>(data: T, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+import { getClientIp, checkRefreshRateLimit } from "~/lib/rate-limit.server";
+import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 // action: POST /api/auth/refresh
 export async function action({ request }: { request: Request }): Promise<Response> {
-  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  // Handle CORS preflight
+  const preflight = handleCorsPreflightRequest(request);
+  if (preflight) return preflight;
+
+  if (request.method !== "POST") {
+    return apiResponse({ error: "Method not allowed" }, 405, request);
+  }
+
+  // Rate limit
+  const ip = getClientIp(request);
+  if (!checkRefreshRateLimit(ip)) {
+    return apiResponse({ error: "Too many requests" }, 429, request);
+  }
 
   let body: { refreshToken?: string };
   try {
@@ -20,13 +27,13 @@ export async function action({ request }: { request: Request }): Promise<Respons
     body = {};
   }
 
-  if (!body.refreshToken) return json({ error: "Refresh token required" }, 400);
+  if (!body.refreshToken) return apiResponse({ error: "Refresh token required" }, 400, request);
 
   const userId = await verifyRefreshToken(body.refreshToken);
-  if (!userId) return json({ error: "Invalid or expired refresh token" }, 401);
+  if (!userId) return apiResponse({ error: "Invalid or expired refresh token" }, 401, request);
 
   const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) return json({ error: "User not found" }, 404);
+  if (!user) return apiResponse({ error: "User not found" }, 404, request);
 
   await revokeRefreshToken(body.refreshToken);
   const newRefreshToken = await createRefreshToken(userId);
@@ -41,5 +48,5 @@ export async function action({ request }: { request: Request }): Promise<Respons
     "15m",
   );
 
-  return json({ token: accessToken, refreshToken: newRefreshToken });
+  return apiResponse({ token: accessToken, refreshToken: newRefreshToken }, 200, request);
 }

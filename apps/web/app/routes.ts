@@ -69,6 +69,9 @@ export default [
   // Profile API
   route("api/me", "routes/api/me.ts"),
 
+  // Health check
+  route("api/health", "routes/api/health.ts"),
+
   // Public profile and trip views
   route(":username", "pages/public/user-profile.tsx"),
   route(":username/:tripSlug", "pages/public/trip-public.tsx"),

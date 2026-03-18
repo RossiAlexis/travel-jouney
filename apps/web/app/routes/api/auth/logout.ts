@@ -1,15 +1,13 @@
 import { revokeRefreshToken } from "@repo/db/auth";
-
-function json<T>(data: T, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 // action: POST /api/auth/logout
 export async function action({ request }: { request: Request }): Promise<Response> {
-  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  // Handle CORS preflight
+  const preflight = handleCorsPreflightRequest(request);
+  if (preflight) return preflight;
+
+  if (request.method !== "POST") return apiResponse({ error: "Method not allowed" }, 405, request);
 
   let body: { refreshToken?: string };
   try {
@@ -19,5 +17,5 @@ export async function action({ request }: { request: Request }): Promise<Respons
   }
 
   if (body.refreshToken) await revokeRefreshToken(body.refreshToken);
-  return json({ success: true });
+  return apiResponse({ success: true }, 200, request);
 }

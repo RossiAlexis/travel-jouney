@@ -1,12 +1,6 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
 import { getTripStats, ServiceError } from "@repo/services";
-
-function json<T>(data: T, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+import { apiResponse } from "~/lib/response.server";
 
 export async function loader({
   request,
@@ -18,10 +12,10 @@ export async function loader({
   const user = await requireApiAuth(request);
   try {
     const stats = await getTripStats(params.tripId, user.id);
-    return json(stats);
+    return apiResponse(stats, 200, request);
   } catch (err: unknown) {
     if (err instanceof ServiceError) {
-      return json({ error: err.message }, err.status);
+      return apiResponse({ error: err.message }, err.status, request);
     }
     throw err;
   }
