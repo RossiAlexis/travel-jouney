@@ -67,7 +67,13 @@ export async function refreshAccessToken(): Promise<string | null> {
 
       // Rotate the refresh token if the server sends a new one
       if (data.refreshToken) {
-        await storeRefreshToken(data.refreshToken);
+        try {
+          await storeRefreshToken(data.refreshToken);
+        } catch {
+          // SecureStore write failed — warn but don't fail the refresh
+          // The new access token is still valid for this session
+          console.warn("[auth] Failed to persist new refresh token to SecureStore");
+        }
       }
 
       return data.token ?? null;

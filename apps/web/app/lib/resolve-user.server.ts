@@ -37,7 +37,10 @@ export async function requireApiAuth(request: Request): Promise<SessionUser> {
       JSON.stringify({ error: "Unauthorized" }),
       {
         status: 401,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "WWW-Authenticate": 'Bearer realm="api"',
+        },
       },
     );
   }

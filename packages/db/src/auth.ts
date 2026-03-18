@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { randomBytes, randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 import { db } from "./index.js";
 import type { SessionUser } from "./index.js";
 
@@ -40,29 +41,38 @@ export async function registerUser(data: {
 
   const passwordHash = await hashPassword(data.password);
 
-  const user = await db.user.create({
-    data: {
-      email: data.email,
-      username: data.username,
-      displayName: data.displayName,
-      passwordHash,
-      accounts: {
-        create: {
-          provider: "credentials",
-          providerAccountId: data.email,
+  try {
+    const user = await db.user.create({
+      data: {
+        email: data.email,
+        username: data.username,
+        displayName: data.displayName,
+        passwordHash,
+        accounts: {
+          create: {
+            provider: "credentials",
+            providerAccountId: data.email,
+          },
         },
       },
-    },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatar: true,
-    },
-  });
-
-  return { user };
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        displayName: true,
+        avatar: true,
+      },
+    });
+    return { user };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return { error: "Email or username already taken" };
+    }
+    throw error;
+  }
 }
 
 export async function loginWithPassword(data: {

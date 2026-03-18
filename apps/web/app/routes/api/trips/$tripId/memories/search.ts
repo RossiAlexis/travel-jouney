@@ -1,6 +1,6 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
 import { searchMemories, ServiceError } from "@repo/services";
-import { apiResponse } from "~/lib/response.server";
+import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 export async function loader({
   request,
@@ -20,4 +20,10 @@ export async function loader({
     if (err instanceof ServiceError) return apiResponse({ error: err.message }, err.status, request);
     throw err;
   }
+}
+
+export async function action({ request }: { request: Request }): Promise<Response> {
+  const preflight = handleCorsPreflightRequest(request);
+  if (preflight) return preflight;
+  return apiResponse({ error: "Method not allowed" }, 405, request);
 }
