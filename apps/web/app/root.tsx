@@ -12,6 +12,16 @@ import "./app.css";
 
 export const links: Route.LinksFunction = () => [];
 
+export function headers() {
+  return {
+    "Content-Security-Policy":
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+  };
+}
+
 // eslint-disable-next-line no-undef
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

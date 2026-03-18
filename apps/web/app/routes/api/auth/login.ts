@@ -1,3 +1,11 @@
+/*
+ * Token Strategy:
+ * - Access token (JWT): 15-minute lifetime, returned as JSON for mobile (stored in expo-secure-store)
+ * - Refresh token: 30-day lifetime, returned as JSON for mobile clients
+ * - Web clients: For web sessions, cookies are used (httpOnly, sameSite=lax)
+ * - Mobile clients: Tokens stored in expo-secure-store (platform-encrypted secure storage)
+ * - Refresh token rotation: each refresh issues a new refresh token and revokes the old one
+ */
 import { loginWithPassword, createRefreshToken } from "@repo/db/auth";
 import { LoginSchema } from "@repo/services";
 import { signToken } from "~/lib/jwt.server";

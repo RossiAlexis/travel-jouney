@@ -27,6 +27,24 @@ export function apiResponse<T>(data: T, status = 200, request?: Request): Respon
 }
 
 /**
+ * Build a JSON error `Response` with a consistent `{ error, details? }` shape.
+ * When `request` is supplied, CORS headers are automatically included.
+ *
+ * @param error   Human-readable error message.
+ * @param status  HTTP status code (e.g. 400, 401, 404, 500).
+ * @param request Optional originating request — used to derive CORS headers.
+ * @param details Optional structured details (e.g. Zod flatten output).
+ */
+export function apiError(
+  error: string,
+  status: number,
+  request?: Request,
+  details?: unknown,
+): Response {
+  return apiResponse({ error, ...(details !== undefined ? { details } : {}) }, status, request);
+}
+
+/**
  * Re-export for convenience so callers only need to import from this module.
  */
 export { handleCorsPreflightRequest } from "~/lib/cors.server";
