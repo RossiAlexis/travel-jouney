@@ -1,6 +1,5 @@
 import { verifyRefreshToken, revokeRefreshToken, createRefreshToken } from "@repo/db/auth";
-import { RefreshTokenSchema } from "@repo/services";
-import { db } from "~/lib/db.server";
+import { RefreshTokenSchema, getProfile } from "@repo/services";
 import { signToken } from "~/lib/jwt.server";
 import { getClientIp, checkRefreshRateLimit } from "~/lib/rate-limit.server";
 import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
@@ -36,7 +35,7 @@ export async function action({ request }: { request: Request }): Promise<Respons
   const userId = await verifyRefreshToken(parsed.data.refreshToken);
   if (!userId) return apiResponse({ error: "Invalid or expired refresh token" }, 401, request);
 
-  const user = await db.user.findUnique({ where: { id: userId } });
+  const user = await getProfile(userId);
   if (!user) return apiResponse({ error: "User not found" }, 404, request);
 
   await revokeRefreshToken(parsed.data.refreshToken);

@@ -2,6 +2,18 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import * as pg from "pg";
 
+// Re-export Prisma-generated types so consumers don't need @prisma/client directly
+export type {
+  Trip,
+  Memory,
+  Expense,
+  User,
+  Photo,
+  Account,
+  Session,
+} from "@prisma/client";
+export { TripStatus, MemoryCategory, ExpenseCategory } from "@prisma/client";
+
 export type SessionUser = {
   id: string;
   email: string;
