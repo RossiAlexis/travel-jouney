@@ -1,4 +1,5 @@
 import { verifyRefreshToken, revokeRefreshToken, createRefreshToken } from "@repo/db/auth";
+import { RefreshTokenSchema } from "@repo/services";
 import { db } from "~/lib/db.server";
 import { signToken } from "~/lib/jwt.server";
 import { getClientIp, checkRefreshRateLimit } from "~/lib/rate-limit.server";
@@ -20,22 +21,25 @@ export async function action({ request }: { request: Request }): Promise<Respons
     return apiResponse({ error: "Too many requests" }, 429, request);
   }
 
-  let body: { refreshToken?: string };
+  let rawBody: unknown;
   try {
-    body = (await request.json().catch(() => ({}))) as { refreshToken?: string };
+    rawBody = await request.json().catch(() => ({}));
   } catch {
-    body = {};
+    rawBody = {};
   }
 
-  if (!body.refreshToken) return apiResponse({ error: "Refresh token required" }, 400, request);
+  const parsed = RefreshTokenSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return apiResponse({ error: "Refresh token required" }, 400, request);
+  }
 
-  const userId = await verifyRefreshToken(body.refreshToken);
+  const userId = await verifyRefreshToken(parsed.data.refreshToken);
   if (!userId) return apiResponse({ error: "Invalid or expired refresh token" }, 401, request);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return apiResponse({ error: "User not found" }, 404, request);
 
-  await revokeRefreshToken(body.refreshToken);
+  await revokeRefreshToken(parsed.data.refreshToken);
   const newRefreshToken = await createRefreshToken(userId);
   const accessToken = await signToken(
     {

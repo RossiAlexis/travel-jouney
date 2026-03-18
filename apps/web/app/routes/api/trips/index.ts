@@ -1,5 +1,5 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
-import { listTrips, createTrip } from "@repo/services";
+import { listTrips, createTrip, CreateTripSchema } from "@repo/services";
 import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 export async function loader({ request }: { request: Request }): Promise<Response> {
@@ -15,14 +15,19 @@ export async function action({ request }: { request: Request }): Promise<Respons
 
   if (request.method !== "POST") return apiResponse({ error: "Method not allowed" }, 405, request);
   const user = await requireApiAuth(request);
-  let body: Record<string, unknown>;
+
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiResponse({ error: "Invalid JSON body" }, 400, request);
   }
-  if (!body.title) return apiResponse({ error: "title is required" }, 400, request);
-  if (!body.startDate) return apiResponse({ error: "startDate is required" }, 400, request);
-  const trip = await createTrip(user.id, body as Parameters<typeof createTrip>[1]);
+
+  const parsed = CreateTripSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return apiResponse({ error: "Validation failed", details: parsed.error.flatten() }, 400, request);
+  }
+
+  const trip = await createTrip(user.id, parsed.data);
   return apiResponse(trip, 201, request);
 }

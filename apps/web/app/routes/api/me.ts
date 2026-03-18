@@ -1,6 +1,5 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
-import { getProfile, updateProfile } from "@repo/services";
-import { ServiceError } from "@repo/services";
+import { getProfile, updateProfile, UpdateProfileSchema, ServiceError } from "@repo/services";
 import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 // GET /api/me — returns user profile
@@ -21,14 +20,21 @@ export async function action({ request }: { request: Request }): Promise<Respons
     return apiResponse({ error: "Method not allowed" }, 405, request);
   }
   const user = await requireApiAuth(request);
-  let body: { displayName?: string; bio?: string | null; avatar?: string | null };
+
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiResponse({ error: "Invalid JSON body" }, 400, request);
   }
+
+  const parsed = UpdateProfileSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return apiResponse({ error: "Validation failed", details: parsed.error.flatten() }, 400, request);
+  }
+
   try {
-    const updated = await updateProfile(user.id, body);
+    const updated = await updateProfile(user.id, parsed.data);
     return apiResponse({ user: updated }, 200, request);
   } catch (err) {
     if (err instanceof ServiceError) return apiResponse({ error: err.message }, err.status, request);

@@ -9,14 +9,16 @@
     "./trips": "./src/trips.ts",
     "./memories": "./src/memories.ts",
     "./expenses": "./src/expenses.ts",
-    "./profile": "./src/profile.ts"
+    "./profile": "./src/profile.ts",
+    "./schemas": "./src/schemas.ts"
   },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
     "@repo/db": "workspace:*",
-    "@repo/types": "workspace:*"
+    "@repo/types": "workspace:*",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@repo/tsconfig": "workspace:*",

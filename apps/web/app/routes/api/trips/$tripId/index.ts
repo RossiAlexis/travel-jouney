@@ -1,5 +1,5 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
-import { getTripById, updateTrip, deleteTrip, ServiceError } from "@repo/services";
+import { getTripById, updateTrip, deleteTrip, UpdateTripSchema, ServiceError } from "@repo/services";
 import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 export async function loader({
@@ -41,14 +41,20 @@ export async function action({
   }
 
   if (request.method === "PUT" || request.method === "PATCH") {
-    let body: Record<string, unknown>;
+    let rawBody: unknown;
     try {
-      body = await request.json();
+      rawBody = await request.json();
     } catch {
       return apiResponse({ error: "Invalid JSON body" }, 400, request);
     }
+
+    const parsed = UpdateTripSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return apiResponse({ error: "Validation failed", details: parsed.error.flatten() }, 400, request);
+    }
+
     try {
-      const trip = await updateTrip(params.tripId, user.id, body as Parameters<typeof updateTrip>[2]);
+      const trip = await updateTrip(params.tripId, user.id, parsed.data);
       return apiResponse(trip, 200, request);
     } catch (err: unknown) {
       if (err instanceof ServiceError) {

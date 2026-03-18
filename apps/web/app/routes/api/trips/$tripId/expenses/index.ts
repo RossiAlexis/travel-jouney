@@ -1,5 +1,5 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
-import { listExpenses, createExpense, ServiceError } from "@repo/services";
+import { listExpenses, createExpense, CreateExpenseSchema, ServiceError } from "@repo/services";
 import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 export async function loader({
@@ -32,18 +32,21 @@ export async function action({
 
   if (request.method !== "POST") return apiResponse({ error: "Method not allowed" }, 405, request);
   const user = await requireApiAuth(request);
-  let body: Record<string, unknown>;
+
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return apiResponse({ error: "Invalid JSON body" }, 400, request);
   }
-  if (!body.description) return apiResponse({ error: "description is required" }, 400, request);
-  if (!body.amount) return apiResponse({ error: "amount is required" }, 400, request);
-  if (!body.currency) return apiResponse({ error: "currency is required" }, 400, request);
-  if (!body.date) return apiResponse({ error: "date is required" }, 400, request);
+
+  const parsed = CreateExpenseSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return apiResponse({ error: "Validation failed", details: parsed.error.flatten() }, 400, request);
+  }
+
   try {
-    const expense = await createExpense(params.tripId, user.id, body as Parameters<typeof createExpense>[2]);
+    const expense = await createExpense(params.tripId, user.id, parsed.data);
     return apiResponse(expense, 201, request);
   } catch (err) {
     if (err instanceof ServiceError) return apiResponse({ error: err.message }, err.status, request);

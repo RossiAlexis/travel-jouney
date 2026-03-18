@@ -1,5 +1,5 @@
 import { requireApiAuth } from "~/lib/resolve-user.server";
-import { getMemoryById, updateMemory, deleteMemory, ServiceError } from "@repo/services";
+import { getMemoryById, updateMemory, deleteMemory, UpdateMemorySchema, ServiceError } from "@repo/services";
 import { apiResponse, handleCorsPreflightRequest } from "~/lib/response.server";
 
 export async function loader({
@@ -44,14 +44,20 @@ export async function action({
   }
 
   if (request.method === "PUT" || request.method === "PATCH") {
-    let body: Record<string, unknown>;
+    let rawBody: unknown;
     try {
-      body = await request.json();
+      rawBody = await request.json();
     } catch {
       return apiResponse({ error: "Invalid JSON body" }, 400, request);
     }
+
+    const parsed = UpdateMemorySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return apiResponse({ error: "Validation failed", details: parsed.error.flatten() }, 400, request);
+    }
+
     try {
-      const memory = await updateMemory(params.memoryId, user.id, body as Parameters<typeof updateMemory>[2]);
+      const memory = await updateMemory(params.memoryId, user.id, parsed.data);
       return apiResponse(memory, 200, request);
     } catch (err) {
       if (err instanceof ServiceError) return apiResponse({ error: err.message }, err.status, request);
