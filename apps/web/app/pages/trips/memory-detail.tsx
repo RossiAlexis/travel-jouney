@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useFetcher, data, redirect } from "react-router";
 import type { Route } from "./+types/memory-detail";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { getMemoryById, deleteMemory, getTripById } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
@@ -34,19 +34,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
   const { tripId, memoryId } = params;
 
-  const memory = await db.memory.findFirst({
-    where: { id: memoryId, tripId, userId: user.id },
-    include: { photos: { orderBy: { order: "asc" } } },
-  });
+  const memory = await getMemoryById(memoryId, tripId, user.id);
 
   if (!memory) {
     throw new Response("Memory not found", { status: 404 });
   }
 
-  const trip = await db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-    select: { id: true, title: true },
-  });
+  const trip = await getTripById(tripId, user.id);
 
   return data({ memory, trip });
 }
@@ -58,15 +52,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const intent = formData.get("intent");
 
   if (intent === "delete") {
-    const memory = await db.memory.findFirst({
-      where: { id: memoryId, tripId, userId: user.id },
-    });
-
-    if (!memory) {
-      throw new Response("Memory not found", { status: 404 });
-    }
-
-    await db.memory.delete({ where: { id: memoryId } });
+    await deleteMemory(memoryId, user.id);
     return redirect(`/trips/${tripId}`);
   }
 

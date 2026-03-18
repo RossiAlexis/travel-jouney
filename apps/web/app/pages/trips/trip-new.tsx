@@ -4,7 +4,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { tripSchemaWithDates } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { createTrip } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -51,19 +51,14 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   try {
-    const trip = await db.trip.create({
-      data: {
-        title: submission.value.title,
-        description: submission.value.description || null,
-        startDate: new Date(submission.value.startDate),
-        endDate: submission.value.endDate
-          ? new Date(submission.value.endDate)
-          : null,
-        status: submission.value.status,
-        budget: submission.value.budget || null,
-        currency: submission.value.currency || "USD",
-        userId: user.id,
-      },
+    const trip = await createTrip(user.id, {
+      title: submission.value.title,
+      description: submission.value.description || null,
+      startDate: submission.value.startDate,
+      endDate: submission.value.endDate || null,
+      status: submission.value.status,
+      budget: submission.value.budget || null,
+      currency: submission.value.currency || "USD",
     });
 
     return redirect(`/trips/${trip.id}`);

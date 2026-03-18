@@ -1,20 +1,12 @@
 import type { Route } from "./+types/trip-export";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { exportTripAsJson } from "@repo/services";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
   const { tripId } = params;
 
-  const trip = await db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-    include: {
-      memories: { include: { photos: true }, orderBy: { date: "asc" } },
-      expenses: { orderBy: { date: "asc" } },
-    },
-  });
-
-  if (!trip) throw new Response("Not Found", { status: 404 });
+  const trip = await exportTripAsJson(tripId, user.id);
 
   const exportData = {
     exportedAt: new Date().toISOString(),

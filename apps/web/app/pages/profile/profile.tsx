@@ -2,7 +2,7 @@ import { Link, useLoaderData } from "react-router";
 import { data } from "react-router";
 import type { Route } from "./+types/profile";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { db } from "~/lib/db.server"; // TODO: replace with service once getProfile returns _count.trips, _count.memories, createdAt
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";

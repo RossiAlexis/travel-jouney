@@ -5,7 +5,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { memorySchema } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { getTripById, createMemory } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -21,30 +21,11 @@ export function meta() {
   ];
 }
 
-async function generateMemorySlug(tripId: string, title: string): Promise<string> {
-  const base = title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
-  let slug = base;
-  let counter = 1;
-  while (await db.memory.findFirst({ where: { tripId, slug } })) {
-    slug = `${base}-${counter++}`;
-  }
-  return slug;
-}
-
 export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
   const { tripId } = params;
 
-  const trip = await db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-    select: { id: true, title: true, currency: true },
-  });
+  const trip = await getTripById(tripId, user.id);
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
@@ -71,32 +52,17 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
   }
 
-  const trip = await db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-  });
-
-  if (!trip) {
-    throw new Response("Trip not found", { status: 404 });
-  }
-
   try {
-    const slug = await generateMemorySlug(tripId, submission.value.title);
-
-    const memory = await db.memory.create({
-      data: {
-        tripId,
-        userId: user.id,
-        title: submission.value.title,
-        content: submission.value.content,
-        date: new Date(submission.value.date),
-        category: submission.value.category,
-        rating: submission.value.rating ?? null,
-        locationName: submission.value.locationName ?? null,
-        locationAddress: submission.value.locationAddress ?? null,
-        latitude: submission.value.latitude ?? null,
-        longitude: submission.value.longitude ?? null,
-        slug,
-      },
+    const memory = await createMemory(tripId, user.id, {
+      title: submission.value.title,
+      content: submission.value.content,
+      date: submission.value.date,
+      category: submission.value.category,
+      rating: submission.value.rating ?? null,
+      locationName: submission.value.locationName ?? null,
+      locationAddress: submission.value.locationAddress ?? null,
+      latitude: submission.value.latitude ?? null,
+      longitude: submission.value.longitude ?? null,
     });
 
     return redirect(`/trips/${tripId}/memories/${memory.id}`);

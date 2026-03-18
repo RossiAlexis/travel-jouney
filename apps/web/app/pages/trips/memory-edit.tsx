@@ -4,7 +4,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { memorySchema } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { getMemoryById, updateMemory, getTripById } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -40,30 +40,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
   const { tripId, memoryId } = params;
 
-  const memory = await db.memory.findFirst({
-    where: { id: memoryId, tripId, userId: user.id },
-    select: {
-      id: true,
-      title: true,
-      content: true,
-      date: true,
-      category: true,
-      rating: true,
-      locationName: true,
-      locationAddress: true,
-      latitude: true,
-      longitude: true,
-    },
-  });
+  const memory = await getMemoryById(memoryId, tripId, user.id);
 
   if (!memory) {
     throw new Response("Memory not found", { status: 404 });
   }
 
-  const trip = await db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-    select: { id: true, title: true },
-  });
+  const trip = await getTripById(tripId, user.id);
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
@@ -90,28 +73,17 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
   }
 
-  const memory = await db.memory.findFirst({
-    where: { id: memoryId, tripId, userId: user.id },
-  });
-
-  if (!memory) {
-    throw new Response("Memory not found", { status: 404 });
-  }
-
   try {
-    await db.memory.update({
-      where: { id: memoryId },
-      data: {
-        title: submission.value.title,
-        content: submission.value.content,
-        date: new Date(submission.value.date),
-        category: submission.value.category,
-        rating: submission.value.rating ?? null,
-        locationName: submission.value.locationName ?? null,
-        locationAddress: submission.value.locationAddress ?? null,
-        latitude: submission.value.latitude ?? null,
-        longitude: submission.value.longitude ?? null,
-      },
+    await updateMemory(memoryId, user.id, {
+      title: submission.value.title,
+      content: submission.value.content,
+      date: submission.value.date,
+      category: submission.value.category,
+      rating: submission.value.rating ?? null,
+      locationName: submission.value.locationName ?? null,
+      locationAddress: submission.value.locationAddress ?? null,
+      latitude: submission.value.latitude ?? null,
+      longitude: submission.value.longitude ?? null,
     });
 
     return redirect(`/trips/${tripId}/memories/${memoryId}`);

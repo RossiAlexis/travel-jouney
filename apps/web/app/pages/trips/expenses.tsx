@@ -5,7 +5,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { expenseSchema } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { getTripById, listExpenses, createExpense, deleteExpense } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -61,42 +61,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
   const { tripId } = params;
 
-  const trip = await db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-    select: {
-      id: true,
-      title: true,
-      currency: true,
-      budget: true,
-    },
-  });
+  const trip = await getTripById(tripId, user.id);
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
-  const expenses = await db.expense.findMany({
-    where: { tripId, userId: user.id },
-    orderBy: { date: "desc" },
-    select: {
-      id: true,
-      amount: true,
-      currency: true,
-      category: true,
-      description: true,
-      date: true,
-    },
-  });
+  const { expenses, totals: categoryTotals } = await listExpenses(tripId, user.id);
 
-  // Totals by category
-  const totals = expenses.reduce(
-    (acc, expense) => {
-      acc[expense.category] = (acc[expense.category] ?? 0) + expense.amount;
-      acc.total += expense.amount;
-      return acc;
-    },
-    { total: 0 } as Record<string, number>
-  );
+  // Add a grand total entry expected by the component
+  const totals: Record<string, number> = {
+    ...categoryTotals,
+    total: expenses.reduce((sum, e) => sum + e.amount, 0),
+  };
 
   return data({ trip, expenses, totals });
 }
@@ -117,26 +94,14 @@ export async function action({ request, params }: Route.ActionArgs) {
       );
     }
 
-    const trip = await db.trip.findFirst({
-      where: { id: tripId, userId: user.id },
-    });
-
-    if (!trip) {
-      throw new Response("Trip not found", { status: 404 });
-    }
-
     try {
-      await db.expense.create({
-        data: {
-          tripId,
-          userId: user.id,
-          amount: submission.value.amount,
-          currency: submission.value.currency,
-          category: submission.value.category,
-          description: submission.value.description,
-          date: new Date(submission.value.date),
-          memoryId: submission.value.memoryId || null,
-        },
+      await createExpense(tripId, user.id, {
+        amount: submission.value.amount,
+        currency: submission.value.currency,
+        category: submission.value.category,
+        description: submission.value.description,
+        date: submission.value.date,
+        memoryId: submission.value.memoryId || null,
       });
 
       return data({ submission: submission.reply(), error: null });
@@ -154,16 +119,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "delete") {
     const expenseId = formData.get("expenseId") as string;
-
-    const expense = await db.expense.findFirst({
-      where: { id: expenseId, tripId, userId: user.id },
-    });
-
-    if (!expense) {
-      throw new Response("Expense not found", { status: 404 });
-    }
-
-    await db.expense.delete({ where: { id: expenseId } });
+    await deleteExpense(expenseId, tripId, user.id);
     return data({ success: true });
   }
 

@@ -4,7 +4,7 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { profileSchema } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { getProfile, updateProfile } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -29,16 +29,7 @@ export function meta() {
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireAuth(request);
 
-  const profile = await db.user.findUnique({
-    where: { id: user.id },
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      displayName: true,
-      bio: true,
-    },
-  });
+  const profile = await getProfile(user.id);
 
   if (!profile) {
     throw new Response("User not found", { status: 404 });
@@ -63,12 +54,9 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   try {
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        displayName: submission.value.displayName,
-        bio: submission.value.bio ?? null,
-      },
+    await updateProfile(user.id, {
+      displayName: submission.value.displayName,
+      bio: submission.value.bio ?? null,
     });
 
     return redirect("/profile");

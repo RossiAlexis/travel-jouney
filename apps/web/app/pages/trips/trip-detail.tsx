@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useFetcher, data, redirect } from "react-router";
 import type { Route } from "./+types/trip-detail";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { db } from "~/lib/db.server"; // kept for db.expense.aggregate — TODO: use getTripStats once it's exposed via services
+import { getTripById, deleteTrip } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -110,35 +111,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
   const { tripId } = params;
 
-  const trip = await db.trip.findFirst({
-    where: {
-      id: tripId,
-      userId: user.id,
-    },
-    include: {
-      memories: {
-        orderBy: { date: "desc" },
-        include: {
-          photos: {
-            take: 3,
-            orderBy: { order: "asc" },
-          },
-        },
-      },
-      _count: {
-        select: {
-          memories: true,
-          expenses: true,
-        },
-      },
-    },
-  });
+  const trip = await getTripById(tripId, user.id);
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
   // Calculate total expenses
+  // TODO: replace with getTripStats from @repo/services once expense aggregate is available
   const expenseTotal = await db.expense.aggregate({
     where: { tripId },
     _sum: { amount: true },
@@ -191,19 +171,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const intent = formData.get("intent");
 
   if (intent === "delete") {
-    // Verify ownership
-    const trip = await db.trip.findFirst({
-      where: { id: tripId, userId: user.id },
-    });
-
-    if (!trip) {
-      throw new Response("Trip not found", { status: 404 });
-    }
-
-    await db.trip.delete({
-      where: { id: tripId },
-    });
-
+    await deleteTrip(tripId, user.id);
     return redirect("/dashboard");
   }
 

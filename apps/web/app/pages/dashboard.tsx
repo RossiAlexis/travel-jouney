@@ -1,7 +1,7 @@
 import { Link, data, useNavigation } from "react-router";
 import type { Route } from "./+types/dashboard";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { listTrips } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Plus } from "lucide-react";
 import type { TripStatus } from "~/types";
@@ -47,17 +47,7 @@ const tripsSchema = z
 
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await requireAuth(request);
-  const unparsedTrips = await db.trip.findMany({
-    where: { userId: user.id },
-    orderBy: [{ status: "asc" }, { startDate: "desc" }],
-    include: {
-      _count: {
-        select: {
-          memories: true,
-        },
-      },
-    },
-  });
+  const unparsedTrips = await listTrips(user.id);
 
   const trips = tripsSchema.safeParse(unparsedTrips);
   if (!trips.success) {

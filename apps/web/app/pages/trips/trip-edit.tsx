@@ -4,7 +4,8 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { tripSchemaWithDates } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
+import { db } from "~/lib/db.server"; // kept for generateUniqueTripSlug — TODO: move slug generation into @repo/services/updateTrip
+import { getTripById, updateTrip } from "@repo/services";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -77,24 +78,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const user = await requireAuth(request);
   const { tripId } = params;
 
-  const trip = await db.trip.findFirst({
-    where: {
-      id: tripId,
-      userId: user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      startDate: true,
-      endDate: true,
-      status: true,
-      budget: true,
-      currency: true,
-      isPublic: true,
-      slug: true,
-    },
-  });
+  const trip = await getTripById(tripId, user.id);
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
@@ -126,37 +110,31 @@ export async function action({ request, params }: Route.ActionArgs) {
     );
   }
 
-  // Verify ownership
-  const existingTrip = await db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-  });
+  // Fetch current trip to check existing slug
+  const existingTrip = await getTripById(tripId, user.id);
 
   if (!existingTrip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
   // Generate slug if making public for the first time
+  // TODO: move slug generation into @repo/services/updateTrip
   let slug = existingTrip.slug;
   if (isPublic && !slug) {
     slug = await generateUniqueTripSlug(user.id, submission.value.title);
   }
 
   try {
-    await db.trip.update({
-      where: { id: tripId },
-      data: {
-        title: submission.value.title,
-        description: submission.value.description || null,
-        startDate: new Date(submission.value.startDate),
-        endDate: submission.value.endDate
-          ? new Date(submission.value.endDate)
-          : null,
-        status: submission.value.status,
-        budget: submission.value.budget || null,
-        currency: submission.value.currency || "USD",
-        isPublic,
-        slug,
-      },
+    await updateTrip(tripId, user.id, {
+      title: submission.value.title,
+      description: submission.value.description || null,
+      startDate: submission.value.startDate,
+      endDate: submission.value.endDate || null,
+      status: submission.value.status,
+      budget: submission.value.budget || null,
+      currency: submission.value.currency || "USD",
+      isPublic,
+      slug,
     });
 
     return redirect(`/trips/${tripId}`);
