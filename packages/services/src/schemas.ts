@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const dateString = z.string().refine((v) => !isNaN(Date.parse(v)), { message: "Invalid date" });
+
 // ============================================
 // TRIP SCHEMAS
 // ============================================
@@ -7,8 +9,8 @@ import { z } from "zod";
 export const CreateTripSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional().nullable(),
-  startDate: z.string().min(1, "startDate is required"),
-  endDate: z.string().optional().nullable(),
+  startDate: dateString,
+  endDate: dateString.optional().nullable(),
   status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]).optional(),
   budget: z.number().optional().nullable(),
   currency: z.string().optional(),
@@ -18,8 +20,8 @@ export const CreateTripSchema = z.object({
 export const UpdateTripSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional().nullable(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional().nullable(),
+  startDate: dateString.optional(),
+  endDate: dateString.optional().nullable(),
   status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]).optional(),
   budget: z.number().optional().nullable(),
   currency: z.string().optional(),
@@ -35,7 +37,7 @@ export const UpdateTripSchema = z.object({
 export const CreateMemorySchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
-  date: z.string().min(1, "Date is required"),
+  date: dateString,
   locationName: z.string().optional().nullable(),
   locationAddress: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
@@ -51,7 +53,7 @@ export const CreateMemorySchema = z.object({
 export const UpdateMemorySchema = z.object({
   title: z.string().min(1).optional(),
   content: z.string().min(1).optional(),
-  date: z.string().optional(),
+  date: dateString.optional(),
   locationName: z.string().optional().nullable(),
   locationAddress: z.string().optional().nullable(),
   latitude: z.number().optional().nullable(),
@@ -72,10 +74,8 @@ export const CreateExpenseSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.number().positive("Amount must be positive"),
   currency: z.string().min(1, "Currency is required"),
-  date: z.string().min(1, "Date is required"),
-  category: z
-    .enum(["ACCOMMODATION", "FOOD", "TRANSPORT", "ACTIVITIES", "SHOPPING", "OTHER"])
-    .optional(),
+  date: dateString,
+  category: z.enum(["ACCOMMODATION", "FOOD", "TRANSPORT", "ACTIVITIES", "SHOPPING", "OTHER"]),
   memoryId: z.string().optional().nullable(),
 });
 

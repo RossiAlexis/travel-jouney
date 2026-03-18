@@ -4,6 +4,8 @@ import type { SessionUser } from "~/types";
 
 export { hashPassword, verifyPassword, loginWithPassword, registerUser } from "@repo/db/auth";
 
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — matches cookie maxAge
+
 /**
  * Get the current user from the session
  * Returns null if not authenticated
@@ -16,24 +18,24 @@ export async function getUser(request: Request): Promise<SessionUser | null> {
     return null;
   }
 
-  // Check session validity in DB (rejects expired or revoked sessions)
-  const dbSession = await db.session.findFirst({
+  // Check session validity in DB and fetch user in a single query
+  const sessionWithUser = await db.session.findFirst({
     where: { userId, expiresAt: { gt: new Date() } },
-  });
-  if (!dbSession) return null;
-
-  const user = await db.user.findUnique({
-    where: { id: userId },
     select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatar: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          displayName: true,
+          avatar: true,
+        },
+      },
     },
   });
+  if (!sessionWithUser) return null;
 
-  return user;
+  return sessionWithUser.user;
 }
 
 /**
@@ -65,7 +67,7 @@ export async function createUserSession(
   const session = await getSession();
   session.set("userId", userId);
 
-  const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
   await db.session.create({
     data: {
       userId,

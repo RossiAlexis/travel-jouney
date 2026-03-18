@@ -9,24 +9,18 @@
  *  5. exp://*                 — Expo native scheme
  */
 
-const ALWAYS_ALLOWED: ReadonlyArray<string> = [
+const ALLOWED_ORIGINS: ReadonlySet<string> = new Set([
+  ...(process.env.CORS_ORIGIN?.split(",").map((o) => o.trim()).filter(Boolean) ?? []),
   "http://localhost:5173",
   "http://localhost:8081",
   "http://localhost:19006",
-];
-
-function getAllowedOrigins(): string[] {
-  const envOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
-    : [];
-  return [...envOrigins, ...ALWAYS_ALLOWED];
-}
+]);
 
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
-  // Allow the Expo native scheme (exp://...)
-  if (origin.startsWith("exp://")) return true;
-  return getAllowedOrigins().includes(origin);
+  // Allow the Expo native scheme (exp://...) in non-production only
+  if (process.env.NODE_ENV !== "production" && origin.startsWith("exp://")) return true;
+  return ALLOWED_ORIGINS.has(origin);
 }
 
 /**

@@ -5,7 +5,7 @@
  * Optionally merges CORS headers when a `request` is provided.
  */
 
-import { getCorsHeaders, handleCorsPreflightRequest as _handleCorsPreflightRequest } from "~/lib/cors.server";
+import { getCorsHeaders } from "~/lib/cors.server";
 
 /**
  * Build a JSON `Response` with the correct `Content-Type` header.

@@ -1,4 +1,4 @@
-import { verifyRefreshToken, revokeRefreshToken, createRefreshToken } from "@repo/db/auth";
+import { verifyRefreshToken, rotateRefreshToken } from "@repo/db/auth";
 import { RefreshTokenSchema, getProfile } from "@repo/services";
 import { signToken } from "~/lib/jwt.server";
 import { getClientIp, checkRefreshRateLimit } from "~/lib/rate-limit.server";
@@ -22,9 +22,9 @@ export async function action({ request }: { request: Request }): Promise<Respons
 
   let rawBody: unknown;
   try {
-    rawBody = await request.json().catch(() => ({}));
+    rawBody = await request.json();
   } catch {
-    rawBody = {};
+    return apiResponse({ error: "Invalid JSON body" }, 400, request);
   }
 
   const parsed = RefreshTokenSchema.safeParse(rawBody);
@@ -38,8 +38,7 @@ export async function action({ request }: { request: Request }): Promise<Respons
   const user = await getProfile(userId);
   if (!user) return apiResponse({ error: "User not found" }, 404, request);
 
-  await revokeRefreshToken(parsed.data.refreshToken);
-  const newRefreshToken = await createRefreshToken(userId);
+  const newRefreshToken = await rotateRefreshToken(parsed.data.refreshToken, userId);
   const accessToken = await signToken(
     {
       id: user.id,

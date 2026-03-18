@@ -20,6 +20,10 @@ function cleanExpired(): void {
   }
 }
 
+// Clean up expired entries every 5 minutes
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+setInterval(cleanExpired, CLEANUP_INTERVAL_MS).unref(); // .unref() so it doesn't block process exit
+
 /**
  * Check whether the request identified by `key` is within the allowed rate.
  *
@@ -29,8 +33,6 @@ function cleanExpired(): void {
  * @returns `true` if the request is allowed, `false` if it should be rejected
  */
 export function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
-  cleanExpired();
-
   const now = Date.now();
   const entry = store.get(key);
 

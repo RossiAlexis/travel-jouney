@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { db } from "./index.js";
 import type { SessionUser } from "./index.js";
 
@@ -136,4 +136,26 @@ export async function revokeAllUserRefreshTokens(
   userId: string,
 ): Promise<void> {
   await db.refreshToken.deleteMany({ where: { userId } });
+}
+
+/**
+ * Atomically revoke the old refresh token and create a new one.
+ * Wraps both operations in a transaction so a failure in either
+ * cannot leave the user locked out.
+ */
+export async function rotateRefreshToken(
+  oldToken: string,
+  userId: string,
+): Promise<string> {
+  return db.$transaction(async (tx) => {
+    // Immediately expire the old token
+    await tx.refreshToken.updateMany({
+      where: { token: oldToken },
+      data: { expiresAt: new Date() },
+    });
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const newToken = randomUUID();
+    await tx.refreshToken.create({ data: { token: newToken, userId, expiresAt } });
+    return newToken;
+  });
 }
