@@ -9,12 +9,18 @@ export { hashPassword, verifyPassword, loginWithPassword, registerUser } from "@
  * Returns null if not authenticated
  */
 export async function getUser(request: Request): Promise<SessionUser | null> {
-  const session = await getSession(request.headers.get("Cookie"));
-  const userId = session.get("userId");
+  const cookieSession = await getSession(request.headers.get("Cookie"));
+  const userId = cookieSession.get("userId");
 
   if (!userId) {
     return null;
   }
+
+  // Check session validity in DB (rejects expired or revoked sessions)
+  const dbSession = await db.session.findFirst({
+    where: { userId, expiresAt: { gt: new Date() } },
+  });
+  if (!dbSession) return null;
 
   const user = await db.user.findUnique({
     where: { id: userId },

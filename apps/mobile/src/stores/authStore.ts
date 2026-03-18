@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import { apiRequest, storeRefreshToken, clearRefreshToken } from "../services/api";
+import { apiRequest, getStoredRefreshToken, storeRefreshToken, clearRefreshToken } from "../services/api";
 
 export interface SessionUser {
   id: string;
@@ -115,6 +115,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     set({ isLoading: true });
     try {
+      // Best-effort server-side token revocation
+      const refreshToken = await getStoredRefreshToken();
+      if (refreshToken) {
+        await apiRequest("/api/auth/logout", {
+          method: "POST",
+          body: JSON.stringify({ refreshToken }),
+        }).catch(() => {}); // ignore network errors during signout
+      }
+
       await SecureStore.deleteItemAsync(TOKEN_KEY);
       await clearRefreshToken();
       set({ token: null, user: null });

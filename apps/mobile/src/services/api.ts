@@ -31,47 +31,54 @@ export async function clearRefreshToken(): Promise<void> {
   await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
 }
 
-let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
 
 /**
  * Attempt to exchange the stored refresh token for a new access token.
  * Returns the new access token on success, or null on failure (in which case
  * the stored refresh token is also cleared).
+ *
+ * Concurrent callers share the same in-flight promise to avoid race conditions
+ * where multiple 401s trigger parallel refresh attempts.
  */
 export async function refreshAccessToken(): Promise<string | null> {
-  if (isRefreshing) return null;
-  isRefreshing = true;
-  try {
-    const refreshToken = await getStoredRefreshToken();
-    if (!refreshToken) return null;
+  if (refreshPromise) return refreshPromise;
 
-    const response = await fetch(`${API_URL}/api/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    });
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = await getStoredRefreshToken();
+      if (!refreshToken) return null;
 
-    if (!response.ok) {
-      await clearRefreshToken();
+      const response = await fetch(`${API_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        await clearRefreshToken();
+        return null;
+      }
+
+      const data = (await response.json()) as {
+        token?: string;
+        refreshToken?: string;
+      };
+
+      // Rotate the refresh token if the server sends a new one
+      if (data.refreshToken) {
+        await storeRefreshToken(data.refreshToken);
+      }
+
+      return data.token ?? null;
+    } catch {
       return null;
+    } finally {
+      refreshPromise = null; // clear so future calls can retry
     }
+  })();
 
-    const data = (await response.json()) as {
-      token?: string;
-      refreshToken?: string;
-    };
-
-    // Rotate the refresh token if the server sends a new one
-    if (data.refreshToken) {
-      await storeRefreshToken(data.refreshToken);
-    }
-
-    return data.token ?? null;
-  } catch {
-    return null;
-  } finally {
-    isRefreshing = false;
-  }
+  return refreshPromise;
 }
 
 // ---------------------------------------------------------------------------

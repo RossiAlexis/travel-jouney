@@ -102,6 +102,14 @@ export async function createRefreshToken(userId: string): Promise<string> {
   await db.refreshToken.create({
     data: { userId, token, expiresAt },
   });
+  // Delete expired tokens for this user (housekeeping)
+  try {
+    await db.refreshToken.deleteMany({
+      where: { userId, expiresAt: { lt: new Date() } },
+    });
+  } catch {
+    // Non-fatal: cleanup failure should not block token creation
+  }
   return token;
 }
 
