@@ -5,12 +5,22 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
+  // Force pre-bundling of CJS packages so they're converted to ESM
+  // before the Cloudflare Workers module runner loads them.
+  // The Workers runtime has no CommonJS support (no `module`, no `require`).
+  optimizeDeps: {
+    include: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "react-dom/server",
+    ],
+  },
   environments: {
     ssr: {
       resolve: {
-        // Tell Vite to prefer Workers/browser ESM conditions over Node CJS
         conditions: ["workerd", "worker", "browser", "module", "import", "default"],
-        // Bundle all SSR deps so CJS packages (react, etc.) get converted to ESM
         noExternal: true,
       },
     },
