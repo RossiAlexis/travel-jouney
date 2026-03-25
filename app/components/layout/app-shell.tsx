@@ -15,8 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { MapPin, Plus, User, LogOut, Settings, Menu, X } from "lucide-react";
 import { useState } from "react";
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const user = await getUser(request);
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const user = await getUser(context.db, request);
 
   if (!user) {
     throw redirect("/login");

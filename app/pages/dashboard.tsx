@@ -1,7 +1,6 @@
 import { Link, data } from "react-router";
 import type { Route } from "./+types/dashboard";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -45,9 +44,9 @@ const tripsSchema = z
     });
   });
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireAuth(request);
-  const unparsedTrips = await db.trip.findMany({
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const user = await requireAuth(context.db, request);
+  const unparsedTrips = await context.db.trip.findMany({
     where: { userId: user.id },
     orderBy: [{ status: "asc" }, { startDate: "desc" }],
     include: {

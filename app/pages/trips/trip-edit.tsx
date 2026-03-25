@@ -4,7 +4,6 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { tripSchemaWithDates } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -51,11 +50,11 @@ const tripLoaderSchema = z.object({
   currency: z.string(),
 });
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const user = await requireAuth(request);
+export async function loader({ request, params, context }: Route.LoaderArgs) {
+  const user = await requireAuth(context.db, request);
   const { tripId } = params;
 
-  const trip = await db.trip.findFirst({
+  const trip = await context.db.trip.findFirst({
     where: {
       id: tripId,
       userId: user.id,
@@ -85,8 +84,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return data({ trip: parsed.data });
 }
 
-export async function action({ request, params }: Route.ActionArgs) {
-  const user = await requireAuth(request);
+export async function action({ request, params, context }: Route.ActionArgs) {
+  const user = await requireAuth(context.db, request);
   const { tripId } = params;
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: tripSchemaWithDates });
@@ -99,7 +98,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   // Verify ownership
-  const existingTrip = await db.trip.findFirst({
+  const existingTrip = await context.db.trip.findFirst({
     where: { id: tripId, userId: user.id },
   });
 
@@ -108,7 +107,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   try {
-    await db.trip.update({
+    await context.db.trip.update({
       where: { id: tripId },
       data: {
         title: submission.value.title,

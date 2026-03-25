@@ -1,32 +1,68 @@
-import { db } from "./db.server";
 import { getSession, commitSession, destroySession } from "./session.server";
-import bcrypt from "bcryptjs";
+import type { PrismaClient } from "@prisma/client";
 import type { SessionUser } from "~/types";
 
-const SALT_ROUNDS = 12;
+const ITERATIONS = 100_000;
+const KEY_LENGTH = 32;
 
 /**
- * Hash a password using bcrypt
+ * Hash a password using Web Crypto PBKDF2
  */
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: ITERATIONS, hash: "SHA-256" },
+    keyMaterial,
+    KEY_LENGTH * 8
+  );
+  const saltB64 = btoa(String.fromCharCode(...salt));
+  const hashB64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+  return `pbkdf2:${saltB64}:${hashB64}`;
 }
 
 /**
- * Verify a password against a hash
+ * Verify a password against a PBKDF2 hash
  */
 export async function verifyPassword(
   password: string,
-  hash: string
+  stored: string
 ): Promise<boolean> {
-  return bcrypt.compare(password, hash);
+  const [prefix, saltB64, storedHashB64] = stored.split(":");
+  if (prefix !== "pbkdf2") return false;
+  const salt = Uint8Array.from(atob(saltB64), (c) => c.charCodeAt(0));
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: ITERATIONS, hash: "SHA-256" },
+    keyMaterial,
+    KEY_LENGTH * 8
+  );
+  const hashB64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
+  return hashB64 === storedHashB64;
 }
 
 /**
  * Get the current user from the session
  * Returns null if not authenticated
  */
-export async function getUser(request: Request): Promise<SessionUser | null> {
+export async function getUser(
+  db: PrismaClient,
+  request: Request
+): Promise<SessionUser | null> {
   const session = await getSession(request.headers.get("Cookie"));
   const userId = session.get("userId");
 
@@ -52,8 +88,11 @@ export async function getUser(request: Request): Promise<SessionUser | null> {
  * Require authentication - redirects to login if not authenticated
  * Use this in loaders for protected routes
  */
-export async function requireAuth(request: Request): Promise<SessionUser> {
-  const user = await getUser(request);
+export async function requireAuth(
+  db: PrismaClient,
+  request: Request
+): Promise<SessionUser> {
+  const user = await getUser(db, request);
 
   if (!user) {
     throw new Response(null, {
@@ -71,17 +110,13 @@ export async function requireAuth(request: Request): Promise<SessionUser> {
  * Create a session for a user after login
  */
 export async function createUserSession(
+  db: PrismaClient,
   userId: string,
   redirectTo: string
 ): Promise<Response> {
   const session = await getSession();
   session.set("userId", userId);
 
-  // Create session record in database
-  // TODO: Add a remember me option to the login form
-  // If remember me is checked, set the expiresAt to 30 days
-  // If remember me is not checked, set the expiresAt to 3 hours
-  // For now, we will set the expiresAt to 3 hours
   const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
   await db.session.create({
     data: {
@@ -102,11 +137,13 @@ export async function createUserSession(
 /**
  * Log out - destroy session and redirect
  */
-export async function logout(request: Request): Promise<Response> {
+export async function logout(
+  db: PrismaClient,
+  request: Request
+): Promise<Response> {
   const session = await getSession(request.headers.get("Cookie"));
   const userId = session.get("userId");
 
-  // Delete all sessions for this user (optional: could delete just the current one)
   if (userId) {
     await db.session.deleteMany({
       where: { userId },
@@ -125,13 +162,15 @@ export async function logout(request: Request): Promise<Response> {
 /**
  * Register a new user with email and password
  */
-export async function registerUser(data: {
-  email: string;
-  username: string;
-  displayName: string;
-  password: string;
-}): Promise<{ user: SessionUser } | { error: string }> {
-  // Check if email already exists
+export async function registerUser(
+  db: PrismaClient,
+  data: {
+    email: string;
+    username: string;
+    displayName: string;
+    password: string;
+  }
+): Promise<{ user: SessionUser } | { error: string }> {
   const existingEmail = await db.user.findUnique({
     where: { email: data.email },
   });
@@ -140,7 +179,6 @@ export async function registerUser(data: {
     return { error: "An account with this email already exists" };
   }
 
-  // Check if username already exists
   const existingUsername = await db.user.findUnique({
     where: { username: data.username },
   });
@@ -149,7 +187,6 @@ export async function registerUser(data: {
     return { error: "This username is already taken" };
   }
 
-  // Hash password and create user
   const passwordHash = await hashPassword(data.password);
 
   const user = await db.user.create({
@@ -180,10 +217,13 @@ export async function registerUser(data: {
 /**
  * Login with email and password
  */
-export async function loginWithPassword(data: {
-  email: string;
-  password: string;
-}): Promise<{ user: SessionUser } | { error: string }> {
+export async function loginWithPassword(
+  db: PrismaClient,
+  data: {
+    email: string;
+    password: string;
+  }
+): Promise<{ user: SessionUser } | { error: string }> {
   const user = await db.user.findUnique({
     where: { email: data.email },
     select: {

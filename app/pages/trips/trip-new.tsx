@@ -4,7 +4,6 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
 import { tripSchemaWithDates } from "~/lib/validations";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -33,13 +32,13 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
+export async function loader({ request, context }: Route.LoaderArgs) {
+  await requireAuth(context.db, request);
   return data({});
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const user = await requireAuth(request);
+export async function action({ request, context }: Route.ActionArgs) {
+  const user = await requireAuth(context.db, request);
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: tripSchemaWithDates });
 
@@ -51,7 +50,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   try {
-    const trip = await db.trip.create({
+    const trip = await context.db.trip.create({
       data: {
         title: submission.value.title,
         description: submission.value.description || null,
