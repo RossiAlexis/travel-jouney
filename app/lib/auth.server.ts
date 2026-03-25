@@ -1,5 +1,5 @@
 import { getSession, commitSession, destroySession } from "./session.server";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "../generated/prisma";
 import type { SessionUser } from "~/types";
 
 const ITERATIONS = 100_000;

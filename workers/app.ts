@@ -1,5 +1,5 @@
 import { createRequestHandler } from "react-router";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../app/generated/prisma";
 import { PrismaD1 } from "@prisma/adapter-d1";
 
 interface CloudflareEnv {

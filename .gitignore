@@ -8,8 +8,8 @@
 /.react-router/
 /build/
 
-# Prisma
-/generated/prisma
+# Prisma generated client
+/app/generated/
 
 # SQLite (legacy, can be removed)
 *.db
