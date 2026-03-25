@@ -110,29 +110,49 @@ npx wrangler secret put GOOGLE_REDIRECT_URI
 
 ## Local Development
 
-Wrangler reads `.dev.vars` for local secrets (this file is gitignored).
+### Dev commands
 
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the dev server at `http://localhost:5173` (Vite + Cloudflare proxy) |
+| `npm run preview` | Run the built Worker locally via Wrangler at `http://localhost:8787` |
+
+### First-time local setup
+
+**1. Add `.dev.vars`** (gitignored — already created):
 ```bash
 # .dev.vars
 SESSION_SECRET=any-local-dev-secret
 ```
 
-Apply the schema to the local D1 emulation:
+**2. Apply the schema to the local D1 emulation:**
+
+> `wrangler d1 migrations apply` sometimes doesn't detect new migrations correctly.
+> If your tables are missing, apply the SQL directly:
 
 ```bash
-npx wrangler d1 migrations apply travel-journal-db --local
+npx wrangler d1 execute travel-journal-db --local \
+  --file prisma/migrations/<timestamp>_initial/migration.sql
 ```
 
-Run the local dev server:
-
-```bash
-npx wrangler dev
-```
-
-Seed local database:
+**3. Seed with test data:**
 
 ```bash
 npm run db:seed
+```
+
+The seed auto-detects the Miniflare D1 file in `.wrangler/state/` and populates it.
+
+**Test credentials after seeding:**
+- Email: `test@user.com`
+- Password: `Password123!`
+
+### After a schema change (local)
+
+```bash
+npx prisma migrate dev                        # creates new migration SQL
+npx wrangler d1 execute travel-journal-db \
+  --local --file prisma/migrations/<new>/migration.sql
 ```
 
 ---
