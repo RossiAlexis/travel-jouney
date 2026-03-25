@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "preview": "wrangler dev",
     "typecheck": "react-router typegen && tsc",
     "lint": "eslint app --ext .ts,.tsx",
     "lint:fix": "eslint app --ext .ts,.tsx --fix",

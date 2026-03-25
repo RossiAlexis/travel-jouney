@@ -1,7 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { readdirSync, existsSync } from "fs";
 
-const adapter = new PrismaLibSql({ url: "file:./dev.db" });
+// Prefer the Miniflare D1 file (used by `react-router dev`) if it exists,
+// otherwise fall back to dev.db (used by `prisma studio` and direct CLI tools).
+function resolveDbUrl(): string {
+  const miniflareDir =
+    ".wrangler/state/v3/d1/miniflare-D1DatabaseObject";
+  if (existsSync(miniflareDir)) {
+    const file = readdirSync(miniflareDir).find((f) => f.endsWith(".sqlite"));
+    if (file) return `file:${miniflareDir}/${file}`;
+  }
+  return "file:./dev.db";
+}
+
+const adapter = new PrismaLibSql({ url: resolveDbUrl() });
 const prisma = new PrismaClient({ adapter });
 
 // Test user credentials
