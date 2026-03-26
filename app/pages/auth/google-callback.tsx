@@ -1,13 +1,7 @@
-import { redirect, data } from "react-router";
+import { redirect } from "react-router";
 import type { Route } from "./+types/google-callback";
-import { db } from "~/lib/db.server";
 import { createUserSession } from "~/lib/auth.server";
-
-// Google OAuth configuration
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
-const GOOGLE_REDIRECT_URI =
-  process.env.GOOGLE_REDIRECT_URI || "http://localhost:5173/auth/google/callback";
+import type { PrismaClient } from "@prisma/client";
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -26,7 +20,16 @@ interface GoogleUserInfo {
   picture: string;
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const { db } = context;
+
+  // Google OAuth configuration - read from context env in Workers
+  const GOOGLE_CLIENT_ID = context.cloudflare.env.GOOGLE_CLIENT_ID || "";
+  const GOOGLE_CLIENT_SECRET = context.cloudflare.env.GOOGLE_CLIENT_SECRET || "";
+  const GOOGLE_REDIRECT_URI =
+    context.cloudflare.env.GOOGLE_REDIRECT_URI ||
+    "http://localhost:8787/auth/google/callback";
+
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const error = url.searchParams.get("error");
@@ -94,7 +97,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
     if (existingAccount) {
       // User exists, create session
-      return createUserSession(existingAccount.user.id, "/dashboard");
+      return createUserSession(db, existingAccount.user.id, "/dashboard");
     }
 
     // Check if user with this email exists (to link accounts)
@@ -111,11 +114,15 @@ export async function loader({ request }: Route.LoaderArgs) {
           providerAccountId: googleUser.id,
         },
       });
-      return createUserSession(existingUser.id, "/dashboard");
+      return createUserSession(db, existingUser.id, "/dashboard");
     }
 
     // Create new user with Google account
-    const username = await generateUsername(googleUser.email, googleUser.given_name);
+    const username = await generateUsername(
+      db,
+      googleUser.email,
+      googleUser.given_name
+    );
     const user = await db.user.create({
       data: {
         email: googleUser.email,
@@ -131,7 +138,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       },
     });
 
-    return createUserSession(user.id, "/dashboard");
+    return createUserSession(db, user.id, "/dashboard");
   } catch (error) {
     console.error("Google OAuth error:", error);
     throw redirect("/login?error=oauth_failed");
@@ -141,9 +148,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 /**
  * Generate a unique username from email or name
  */
-async function generateUsername(email: string, name: string): Promise<string> {
+async function generateUsername(
+  db: PrismaClient,
+  email: string,
+  name: string
+): Promise<string> {
   // Try email prefix first
-  let baseUsername = email.split("@")[0].toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  let baseUsername = email
+    .split("@")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "");
 
   if (baseUsername.length < 3) {
     baseUsername = name.toLowerCase().replace(/[^a-z0-9_-]/g, "");
@@ -173,4 +187,3 @@ export default function GoogleCallback() {
     </div>
   );
 }
-

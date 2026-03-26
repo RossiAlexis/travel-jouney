@@ -26,16 +26,16 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
   // Redirect to dashboard if already logged in
-  const user = await getUser(request);
+  const user = await getUser(context.db, request);
   if (user) {
     throw redirect("/dashboard");
   }
   return data({});
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: registerSchema });
 
@@ -46,7 +46,7 @@ export async function action({ request }: Route.ActionArgs) {
     );
   }
 
-  const result = await registerUser({
+  const result = await registerUser(context.db, {
     email: submission.value.email,
     username: submission.value.username,
     displayName: submission.value.displayName,
@@ -60,7 +60,7 @@ export async function action({ request }: Route.ActionArgs) {
     );
   }
 
-  return createUserSession(result.user.id, "/dashboard");
+  return createUserSession(context.db, result.user.id, "/dashboard");
 }
 
 export default function Register({ actionData }: Route.ComponentProps) {

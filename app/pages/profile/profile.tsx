@@ -2,7 +2,6 @@ import { Link, useLoaderData } from "react-router";
 import { data } from "react-router";
 import type { Route } from "./+types/profile";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -15,11 +14,11 @@ export function meta() {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireAuth(request);
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const user = await requireAuth(context.db, request);
 
   // Get user stats
-  const stats = await db.user.findUnique({
+  const stats = await context.db.user.findUnique({
     where: { id: user.id },
     include: {
       _count: {

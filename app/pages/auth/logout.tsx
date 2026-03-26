@@ -7,6 +7,6 @@ export async function loader() {
   throw redirect("/");
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  return logout(request);
+export async function action({ request, context }: Route.ActionArgs) {
+  return logout(context.db, request);
 }

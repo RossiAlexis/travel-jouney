@@ -10,7 +10,7 @@ export type {
   TripStatus,
   EntryCategory,
   ExpenseCategory,
-} from "@prisma/client";
+} from "../generated/prisma";
 
 // App-specific types
 export interface SessionUser {
@@ -54,5 +54,5 @@ export interface ActionResult<T = unknown> {
 }
 
 // Import the actual types to re-export
-import type { Trip, Entry, Photo, Expense } from "@prisma/client";
+import type { Trip, Entry, Photo, Expense } from "../generated/prisma";
 

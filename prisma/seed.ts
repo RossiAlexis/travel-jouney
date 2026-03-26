@@ -1,17 +1,20 @@
-import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import * as pg from "pg";
-import * as bcrypt from "bcryptjs";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { readdirSync, existsSync } from "fs";
 
-const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error("DATABASE_URL or DIRECT_URL environment variable is not set");
+// Prefer the Miniflare D1 file (used by `react-router dev`) if it exists,
+// otherwise fall back to dev.db (used by `prisma studio` and direct CLI tools).
+function resolveDbUrl(): string {
+  const miniflareDir =
+    ".wrangler/state/v3/d1/miniflare-D1DatabaseObject";
+  if (existsSync(miniflareDir)) {
+    const file = readdirSync(miniflareDir).find((f) => f.endsWith(".sqlite"));
+    if (file) return `file:${miniflareDir}/${file}`;
+  }
+  return "file:./dev.db";
 }
 
-const pool = new pg.Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaLibSql({ url: resolveDbUrl() });
 const prisma = new PrismaClient({ adapter });
 
 // Test user credentials
@@ -25,8 +28,13 @@ const TEST_USER = {
 async function main() {
   console.log("🌱 Starting database seed...");
 
-  // Hash the password
-  const passwordHash = await bcrypt.hash(TEST_USER.password, 12);
+  // Hash the password using PBKDF2 (same as auth.server.ts)
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(TEST_USER.password), "PBKDF2", false, ["deriveBits"]);
+  const hashBuffer = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" }, keyMaterial, 256);
+  const passwordHash = `pbkdf2:${btoa(String.fromCharCode(...salt))}:${btoa(String.fromCharCode(...new Uint8Array(hashBuffer)))}`;
+
 
   // Create or update the test user
   const user = await prisma.user.upsert({

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useFetcher, data, redirect } from "react-router";
 import type { Route } from "./+types/trip-detail";
 import { requireAuth } from "~/lib/auth.server";
-import { db } from "~/lib/db.server";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -92,11 +91,11 @@ const tripDetailSchema = z.object({
   totalExpenses: z.number(),
 });
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const user = await requireAuth(request);
+export async function loader({ request, params, context }: Route.LoaderArgs) {
+  const user = await requireAuth(context.db, request);
   const { tripId } = params;
 
-  const trip = await db.trip.findFirst({
+  const trip = await context.db.trip.findFirst({
     where: {
       id: tripId,
       userId: user.id,
@@ -125,7 +124,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   // Calculate total expenses
-  const expenseTotal = await db.expense.aggregate({
+  const expenseTotal = await context.db.expense.aggregate({
     where: { tripId },
     _sum: { amount: true },
   });
@@ -144,15 +143,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return data({ trip: parsed.data, user });
 }
 
-export async function action({ request, params }: Route.ActionArgs) {
-  const user = await requireAuth(request);
+export async function action({ request, params, context }: Route.ActionArgs) {
+  const user = await requireAuth(context.db, request);
   const { tripId } = params;
   const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (intent === "delete") {
     // Verify ownership
-    const trip = await db.trip.findFirst({
+    const trip = await context.db.trip.findFirst({
       where: { id: tripId, userId: user.id },
     });
 
@@ -160,7 +159,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       throw new Response("Trip not found", { status: 404 });
     }
 
-    await db.trip.delete({
+    await context.db.trip.delete({
       where: { id: tripId },
     });
 
