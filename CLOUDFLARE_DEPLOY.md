@@ -54,14 +54,26 @@ database_name = "travel-journal-db"
 database_id = "paste-the-id-here"
 ```
 
-### 3. Apply the database schema
+### 3. Apply the database schema and seed data
+
+Prisma stores migrations under `prisma/migrations/<timestamp>/migration.sql`. **Wrangler only runs `.sql` files that sit directly** in `migrations_dir` (see `wrangler.toml`), so this project keeps a copy for D1 under `d1/migrations/` (e.g. `0001_initial.sql`). After you change the schema with Prisma, copy or regenerate that SQL into a new numbered file under `d1/migrations/` before applying remotely.
 
 ```bash
-# Generate the SQLite migration
+# Local: create/update Prisma migrations (SQLite file in prisma.config.ts)
 npx prisma migrate dev
 
-# Apply to production D1
-npx wrangler d1 migrations apply travel-journal-db
+# Remote D1: apply schema (uses d1/migrations/*.sql)
+npm run db:migrate:remote
+# or: npx wrangler d1 migrations apply travel-journal-db --remote
+```
+
+`npm run db:seed` and `prisma db seed` only target **local** SQLite (`dev.db` or Miniflare’s file under `.wrangler/state/…`). They do **not** populate Cloudflare D1.
+
+To load the same demo data on production D1:
+
+```bash
+npm run db:seed:remote:generate   # optional: rewrite d1/seed.sql from scripts/generate-d1-seed.mjs
+npm run db:seed:remote           # INSERT demo user + trips (login: test@user.com / Password123!)
 ```
 
 ### 4. Set secrets
@@ -131,8 +143,9 @@ SESSION_SECRET=any-local-dev-secret
 > If your tables are missing, apply the SQL directly:
 
 ```bash
-npx wrangler d1 execute travel-journal-db --local \
-  --file prisma/migrations/<timestamp>_initial/migration.sql
+npx wrangler d1 migrations apply travel-journal-db --local
+# or apply the same SQL Wrangler uses for remote:
+npx wrangler d1 execute travel-journal-db --local --file d1/migrations/0001_initial.sql
 ```
 
 **3. Seed with test data:**
@@ -150,14 +163,22 @@ The seed auto-detects the Miniflare D1 file in `.wrangler/state/` and populates 
 ### After a schema change (local)
 
 ```bash
-npx prisma migrate dev                        # creates new migration SQL
-npx wrangler d1 execute travel-journal-db \
-  --local --file prisma/migrations/<new>/migration.sql
+npx prisma migrate dev
+# Copy the new prisma/migrations/<timestamp>_<name>/migration.sql to d1/migrations/0002_<name>.sql (next number), then:
+npx wrangler d1 migrations apply travel-journal-db --local
 ```
 
 ---
 
 ## Subsequent Deploys
+
+One-shot pipeline (remote D1 migrations, remote seed, build, deploy):
+
+```bash
+npm run deploy:cloudflare
+```
+
+Or step by step:
 
 ```bash
 npm run build
@@ -167,7 +188,8 @@ npx wrangler deploy
 If the Prisma schema changed:
 
 ```bash
-npx prisma migrate dev                                    # create migration
-npx wrangler d1 migrations apply travel-journal-db        # apply to production
+npx prisma migrate dev
+# Add d1/migrations/00NN_<name>.sql from the new Prisma migration folder, then:
+npm run db:migrate:remote
 npm run build && npx wrangler deploy
 ```

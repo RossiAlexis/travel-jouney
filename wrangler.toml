@@ -7,7 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DB"
 database_name = "travel-journal-db"
 database_id = "4cdc38b4-94f7-4d05-a536-ee4618ed6f00"
-migrations_dir = "prisma/migrations"
+# Wrangler only reads *.sql files in this folder (not Prisma's nested migration folders).
+migrations_dir = "d1/migrations"
 
 [vars]
 NODE_ENV = "production"

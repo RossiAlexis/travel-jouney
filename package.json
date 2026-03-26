@@ -14,7 +14,11 @@
     "db:migrate": "prisma migrate dev --schema ./prisma/schema.prisma",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:migrate:remote": "CI=true wrangler d1 migrations apply travel-journal-db --remote",
+    "db:seed:remote": "wrangler d1 execute travel-journal-db --remote --file=d1/seed.sql",
+    "db:seed:remote:generate": "node scripts/generate-d1-seed.mjs",
+    "db:studio": "prisma studio",
+    "deploy:cloudflare": "npm run db:migrate:remote && npm run db:seed:remote && npm run build && wrangler deploy"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
