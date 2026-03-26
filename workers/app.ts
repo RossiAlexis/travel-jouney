@@ -1,6 +1,8 @@
 import { createRequestHandler } from "react-router";
-import { PrismaClient } from "../app/generated/prisma";
-import { PrismaD1 } from "@prisma/adapter-d1";
+import {
+  createRepositories,
+  type Repositories,
+} from "../app/lib/repositories";
 
 interface CloudflareEnv {
   DB: D1Database;
@@ -16,7 +18,7 @@ declare module "react-router" {
       env: CloudflareEnv;
       ctx: ExecutionContext;
     };
-    db: PrismaClient;
+    repos: Repositories;
   }
 }
 
@@ -33,16 +35,11 @@ export default {
       process.env.SESSION_SECRET = env.SESSION_SECRET;
     }
 
-    const adapter = new PrismaD1(env.DB);
-    const db = new PrismaClient({ adapter });
+    const repos = createRepositories(env.DB);
 
-    try {
-      return await requestHandler(request, {
-        cloudflare: { env, ctx },
-        db,
-      });
-    } finally {
-      ctx.waitUntil(db.$disconnect());
-    }
+    return requestHandler(request, {
+      cloudflare: { env, ctx },
+      repos,
+    });
   },
 } satisfies ExportedHandler<CloudflareEnv>;

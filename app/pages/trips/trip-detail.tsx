@@ -31,7 +31,12 @@ import {
   Receipt,
 } from "lucide-react";
 import type { TripStatus, EntryCategory } from "~/types";
-import * as z from "zod";
+import type { EntryWithPhotos, Photo, TripWithCounts } from "~/lib/schemas";
+
+interface TripDetailData extends TripWithCounts {
+  entries: EntryWithPhotos[];
+  totalExpenses: number;
+}
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData?.trip) {
@@ -49,119 +54,47 @@ export function meta({ loaderData }: Route.MetaArgs) {
   ];
 }
 
-const tripDetailSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string().nullable(),
-  coverImage: z.string().nullable(),
-  startDate: z.date(),
-  endDate: z.date().nullable(),
-  status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]),
-  isPublic: z.boolean(),
-  budget: z.number().nullable(),
-  currency: z.string(),
-  entries: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-      date: z.date(),
-      category: z.enum([
-        "ACCOMMODATION",
-        "FOOD",
-        "ACTIVITY",
-        "TRANSPORT",
-        "REFLECTION",
-        "OTHER",
-      ]),
-      locationName: z.string().nullable(),
-      rating: z.number().nullable(),
-      photos: z.array(
-        z.object({
-          id: z.string(),
-          url: z.string(),
-          thumbnail: z.string().nullable(),
-        })
-      ),
-    })
-  ),
-  _count: z.object({
-    entries: z.number(),
-    expenses: z.number(),
-  }),
-  totalExpenses: z.number(),
-});
-
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const user = await requireAuth(context.db, request);
+  const user = await requireAuth(context.repos, request);
   const { tripId } = params;
 
-  const trip = await context.db.trip.findFirst({
-    where: {
-      id: tripId,
-      userId: user.id,
-    },
-    include: {
-      entries: {
-        orderBy: { date: "desc" },
-        include: {
-          photos: {
-            take: 3,
-            orderBy: { order: "asc" },
-          },
-        },
-      },
-      _count: {
-        select: {
-          entries: true,
-          expenses: true,
-        },
-      },
-    },
-  });
+  const trip = await context.repos.trips.findByIdWithCountsForUser(
+    tripId,
+    user.id
+  );
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
-  // Calculate total expenses
-  const expenseTotal = await context.db.expense.aggregate({
-    where: { tripId },
-    _sum: { amount: true },
+  const entries = await context.repos.entries.findByTripWithPhotos(tripId, 3);
+  const totalExpenses = await context.repos.expenses.sumByTrip(tripId);
+
+  return data({
+    trip: {
+      ...trip,
+      entries,
+      totalExpenses,
+    },
+    user,
   });
-
-  const tripWithExpenses = {
-    ...trip,
-    totalExpenses: expenseTotal._sum.amount || 0,
-  };
-
-  const parsed = tripDetailSchema.safeParse(tripWithExpenses);
-  if (!parsed.success) {
-    console.error("Error parsing trip:", parsed.error);
-    throw new Response("Error loading trip data", { status: 500 });
-  }
-
-  return data({ trip: parsed.data, user });
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
-  const user = await requireAuth(context.db, request);
+  const user = await requireAuth(context.repos, request);
   const { tripId } = params;
   const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (intent === "delete") {
     // Verify ownership
-    const trip = await context.db.trip.findFirst({
-      where: { id: tripId, userId: user.id },
-    });
+    const trip = await context.repos.trips.findByIdForUser(tripId, user.id);
 
     if (!trip) {
       throw new Response("Trip not found", { status: 404 });
     }
 
-    await context.db.trip.delete({
-      where: { id: tripId },
-    });
+    await context.repos.trips.deleteForUser(tripId, user.id);
 
     return redirect("/dashboard");
   }
@@ -200,7 +133,7 @@ const categoryLabels: Record<EntryCategory, string> = {
 };
 
 export default function TripDetail({ loaderData }: Route.ComponentProps) {
-  const { trip } = loaderData;
+  const trip = loaderData.trip as TripDetailData;
   const deleteFetcher = useFetcher();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isDeleting = deleteFetcher.state === "submitting";
@@ -228,8 +161,8 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
   const isOverBudget = trip.budget && trip.totalExpenses > trip.budget;
 
   // Get all photos from entries
-  const allPhotos = trip.entries.flatMap((entry) =>
-    entry.photos.map((photo) => ({
+  const allPhotos = trip.entries.flatMap((entry: EntryWithPhotos) =>
+    entry.photos.map((photo: Pick<Photo, "id" | "url" | "thumbnail">) => ({
       ...photo,
       entryId: entry.id,
       entryTitle: entry.title,
@@ -271,8 +204,8 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             <div className="flex items-center gap-1.5">
               <BookOpen className="h-4 w-4" />
               <span>
-                {trip._count.entries} entr
-                {trip._count.entries === 1 ? "y" : "ies"}
+                {trip.entriesCount} entr
+                {trip.entriesCount === 1 ? "y" : "ies"}
               </span>
             </div>
             {trip.budget && (
@@ -305,7 +238,11 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             onOpenChange={setIsDeleteDialogOpen}
           >
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="icon">
+              <Button
+                variant="destructive"
+                size="icon"
+                aria-label={`Delete trip ${trip.title}`}
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -413,7 +350,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             </Card>
           ) : (
             <div className="space-y-4">
-              {trip.entries.map((entry) => (
+              {trip.entries.map((entry: EntryWithPhotos) => (
                 <Link
                   key={entry.id}
                   to={`/trips/${trip.id}/entries/${entry.id}`}
@@ -445,9 +382,9 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                       {/* Entry Details */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <h3 className="line-clamp-1 font-semibold">
+                          <h2 className="line-clamp-1 font-semibold">
                             {entry.title}
-                          </h3>
+                          </h2>
                           {entry.rating && (
                             <div className="flex items-center gap-0.5 text-yellow-500">
                               {"★".repeat(entry.rating)}
@@ -504,7 +441,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             </Card>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {allPhotos.map((photo) => (
+              {allPhotos.map((photo: (typeof allPhotos)[number]) => (
                 <Link
                   key={photo.id}
                   to={`/trips/${trip.id}/entries/${photo.entryId}`}

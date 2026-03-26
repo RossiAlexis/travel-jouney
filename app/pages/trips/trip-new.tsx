@@ -33,12 +33,12 @@ export function meta() {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  await requireAuth(context.db, request);
+  await requireAuth(context.repos, request);
   return data({});
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const user = await requireAuth(context.db, request);
+  const user = await requireAuth(context.repos, request);
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: tripSchemaWithDates });
 
@@ -50,19 +50,17 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   try {
-    const trip = await context.db.trip.create({
-      data: {
-        title: submission.value.title,
-        description: submission.value.description || null,
-        startDate: new Date(submission.value.startDate),
-        endDate: submission.value.endDate
-          ? new Date(submission.value.endDate)
-          : null,
-        status: submission.value.status,
-        budget: submission.value.budget || null,
-        currency: submission.value.currency || "USD",
-        userId: user.id,
-      },
+    const trip = await context.repos.trips.create({
+      userId: user.id,
+      title: submission.value.title,
+      description: submission.value.description || null,
+      startDate: new Date(submission.value.startDate),
+      endDate: submission.value.endDate
+        ? new Date(submission.value.endDate)
+        : null,
+      status: submission.value.status,
+      budget: submission.value.budget || null,
+      currency: submission.value.currency || "USD",
     });
 
     return redirect(`/trips/${trip.id}`);

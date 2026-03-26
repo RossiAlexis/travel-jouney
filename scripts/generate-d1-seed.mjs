@@ -1,6 +1,6 @@
 /**
  * Writes d1/seed.sql for remote D1 (wrangler d1 execute --remote --file=d1/seed.sql).
- * Keeps the same demo user password as prisma/seed.ts: Password123!
+ * Keeps the same demo user password used by the app: Password123!
  * PBKDF2 hash verified against app/lib/auth.server.ts (100k iter, SHA-256, 32 bytes).
  */
 import { writeFileSync } from "node:fs";

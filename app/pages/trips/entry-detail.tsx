@@ -12,6 +12,7 @@ export default function EntryDetail() {
   // Placeholder - will be implemented in Phase 4
   return (
     <div>
+      <h1 className="sr-only">Entry Details</h1>
       <div className="mb-6">
         <Skeleton className="mb-2 h-8 w-64" />
         <Skeleton className="h-4 w-48" />

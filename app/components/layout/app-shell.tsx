@@ -16,7 +16,7 @@ import { MapPin, Plus, User, LogOut, Settings, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const user = await getUser(context.db, request);
+  const user = await getUser(context.repos, request);
 
   if (!user) {
     throw redirect("/login");
