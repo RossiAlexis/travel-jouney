@@ -3,16 +3,16 @@ import { Skeleton } from "~/components/ui/skeleton";
 
 export function meta() {
   return [
-    { title: "Entry Details - Travel Journal" },
-    { name: "description", content: "View your journal entry" },
+    { title: "Memory - Travel Journal" },
+    { name: "description", content: "View your travel memory" },
   ];
 }
 
-export default function EntryDetail() {
+export default function MemoryDetail() {
   // Placeholder - will be implemented in Phase 4
   return (
     <div>
-      <h1 className="sr-only">Entry Details</h1>
+      <h1 className="sr-only">Memory Details</h1>
       <div className="mb-6">
         <Skeleton className="mb-2 h-8 w-64" />
         <Skeleton className="h-4 w-48" />
@@ -20,7 +20,7 @@ export default function EntryDetail() {
       <Card>
         <CardContent className="py-12 text-center">
           <p className="text-muted-foreground">
-            Entry detail view will be implemented in Phase 4: Journal Entries
+            Memory detail view will be implemented in Phase 4
           </p>
         </CardContent>
       </Card>

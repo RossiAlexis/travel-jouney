@@ -72,18 +72,18 @@ test.describe("Travel Journal screens", () => {
     await assertPageAndA11y(page, `/trips/${tripId}/edit`, /Edit Trip/i);
     await assertPageAndA11y(
       page,
-      `/trips/${tripId}/entries/new`,
-      /Create Journal Entry/i
+      `/trips/${tripId}/memories/new`,
+      /Add Memory/i
     );
 
-    await page.goto(`/trips/${tripId}/entries/sample-entry`);
-    await expect(page.getByText(/Entry detail view will be implemented/i)).toBeVisible();
+    await page.goto(`/trips/${tripId}/memories/sample-memory`);
+    await expect(page.getByText(/Memory detail view will be implemented/i)).toBeVisible();
     await expectNoA11yViolations(page);
 
     await assertPageAndA11y(
       page,
-      `/trips/${tripId}/entries/sample-entry/edit`,
-      /Edit Entry/i
+      `/trips/${tripId}/memories/sample-memory/edit`,
+      /Edit Memory/i
     );
     await assertPageAndA11y(page, `/trips/${tripId}/expenses`, /Trip Expenses/i);
   });

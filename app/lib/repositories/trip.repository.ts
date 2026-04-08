@@ -39,9 +39,9 @@ export class TripRepository {
       .prepare(
         `SELECT
           t.*,
-          COUNT(e."id") AS entriesCount
+          COUNT(m."id") AS memoriesCount
         FROM "Trip" t
-        LEFT JOIN "Entry" e ON e."tripId" = t."id"
+        LEFT JOIN "Memory" m ON m."tripId" = t."id"
         WHERE t."userId" = ?1
         GROUP BY t."id"
         ORDER BY
@@ -59,7 +59,7 @@ export class TripRepository {
     return results.map((row) =>
       dashboardTripSchema.parse({
         ...row,
-        entriesCount: Number(row.entriesCount ?? 0),
+        memoriesCount: Number(row.memoriesCount ?? 0),
       }),
     );
   }
@@ -80,10 +80,10 @@ export class TripRepository {
       .prepare(
         `SELECT
           t.*,
-          COUNT(DISTINCT e."id") AS entriesCount,
+          COUNT(DISTINCT m."id") AS memoriesCount,
           COUNT(DISTINCT ex."id") AS expensesCount
         FROM "Trip" t
-        LEFT JOIN "Entry" e ON e."tripId" = t."id"
+        LEFT JOIN "Memory" m ON m."tripId" = t."id"
         LEFT JOIN "Expense" ex ON ex."tripId" = t."id"
         WHERE t."id" = ?1 AND t."userId" = ?2
         GROUP BY t."id"`,
@@ -94,7 +94,7 @@ export class TripRepository {
     if (!row) return null;
     return tripWithCountsSchema.parse({
       ...row,
-      entriesCount: Number(row.entriesCount ?? 0),
+      memoriesCount: Number(row.memoriesCount ?? 0),
       expensesCount: Number(row.expensesCount ?? 0),
     });
   }

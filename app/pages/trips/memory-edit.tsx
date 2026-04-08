@@ -3,20 +3,20 @@ import { Skeleton } from "~/components/ui/skeleton";
 
 export function meta() {
   return [
-    { title: "Edit Entry - Travel Journal" },
-    { name: "description", content: "Edit your journal entry" },
+    { title: "Edit Memory - Travel Journal" },
+    { name: "description", content: "Edit your travel memory" },
   ];
 }
 
-export default function EntryEdit() {
+export default function MemoryEdit() {
   // Placeholder - will be implemented in Phase 4
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-3xl font-bold">Edit Entry</h1>
+      <h1 className="mb-6 text-3xl font-bold">Edit Memory</h1>
       <Card>
         <CardContent className="space-y-4 py-6">
           <p className="text-muted-foreground">
-            Entry editing will be implemented in Phase 4: Journal Entries
+            Memory editing will be implemented in Phase 4
           </p>
           <div className="space-y-4">
             <Skeleton className="h-10 w-full" />

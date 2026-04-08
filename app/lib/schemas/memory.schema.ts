@@ -1,13 +1,13 @@
 import { z } from "zod";
 import {
-  entryCategorySchema,
+  memoryCategorySchema,
   sqliteBooleanSchema,
   sqliteDateSchema,
 } from "./common";
 
 export const photoSchema = z.object({
   id: z.string(),
-  entryId: z.string(),
+  memoryId: z.string(),
   url: z.string(),
   thumbnail: z.string().nullable(),
   caption: z.string().nullable(),
@@ -15,7 +15,7 @@ export const photoSchema = z.object({
   createdAt: sqliteDateSchema,
 });
 
-export const entrySchema = z.object({
+export const memorySchema = z.object({
   id: z.string(),
   tripId: z.string(),
   userId: z.string(),
@@ -27,7 +27,7 @@ export const entrySchema = z.object({
   latitude: z.number().nullable(),
   longitude: z.number().nullable(),
   placeId: z.string().nullable(),
-  category: entryCategorySchema,
+  category: memoryCategorySchema,
   rating: z.number().int().nullable(),
   isPublic: sqliteBooleanSchema,
   slug: z.string().nullable(),
@@ -35,7 +35,7 @@ export const entrySchema = z.object({
   updatedAt: sqliteDateSchema,
 });
 
-export const entryWithPhotosSchema = entrySchema.extend({
+export const memoryWithPhotosSchema = memorySchema.extend({
   photos: z.array(
     photoSchema.pick({
       id: true,
@@ -46,5 +46,5 @@ export const entryWithPhotosSchema = entrySchema.extend({
 });
 
 export type Photo = z.infer<typeof photoSchema>;
-export type Entry = z.infer<typeof entrySchema>;
-export type EntryWithPhotos = z.infer<typeof entryWithPhotosSchema>;
+export type Memory = z.infer<typeof memorySchema>;
+export type MemoryWithPhotos = z.infer<typeof memoryWithPhotosSchema>;

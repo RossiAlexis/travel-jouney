@@ -6,7 +6,7 @@ import { createId } from "./id";
 interface CreateExpenseInput {
   tripId: string;
   userId: string;
-  entryId?: string | null;
+  memoryId?: string | null;
   amount: number;
   currency: string;
   category: string;
@@ -32,14 +32,14 @@ export class ExpenseRepository {
     await this.db
       .prepare(
         `INSERT INTO "Expense"
-          ("id", "tripId", "userId", "entryId", "amount", "currency", "category", "description", "date", "createdAt", "updatedAt")
+          ("id", "tripId", "userId", "memoryId", "amount", "currency", "category", "description", "date", "createdAt", "updatedAt")
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`,
       )
       .bind(
         id,
         input.tripId,
         input.userId,
-        input.entryId ?? null,
+        input.memoryId ?? null,
         input.amount,
         input.currency,
         input.category,

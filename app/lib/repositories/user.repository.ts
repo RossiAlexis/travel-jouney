@@ -22,7 +22,7 @@ interface UserStats {
   id: string;
   createdAt: Date;
   tripsCount: number;
-  entriesCount: number;
+  memoriesCount: number;
 }
 
 export class UserRepository {
@@ -123,10 +123,10 @@ export class UserRepository {
           u."id" AS id,
           u."createdAt" AS createdAt,
           COUNT(DISTINCT t."id") AS tripsCount,
-          COUNT(DISTINCT e."id") AS entriesCount
+          COUNT(DISTINCT m."id") AS memoriesCount
         FROM "User" u
         LEFT JOIN "Trip" t ON t."userId" = u."id"
-        LEFT JOIN "Entry" e ON e."userId" = u."id"
+        LEFT JOIN "Memory" m ON m."userId" = u."id"
         WHERE u."id" = ?1
         GROUP BY u."id", u."createdAt"`,
       )
@@ -139,7 +139,7 @@ export class UserRepository {
       id: String(row.id),
       createdAt: new Date(String(row.createdAt)),
       tripsCount: Number(row.tripsCount ?? 0),
-      entriesCount: Number(row.entriesCount ?? 0),
+      memoriesCount: Number(row.memoriesCount ?? 0),
     };
   }
 }

@@ -30,11 +30,11 @@ import {
   Map,
   Receipt,
 } from "lucide-react";
-import type { TripStatus, EntryCategory } from "~/types";
-import type { EntryWithPhotos, Photo, TripWithCounts } from "~/lib/schemas";
+import type { TripStatus, MemoryCategory } from "~/types";
+import type { MemoryWithPhotos, Photo, TripWithCounts } from "~/lib/schemas";
 
 interface TripDetailData extends TripWithCounts {
-  entries: EntryWithPhotos[];
+  memories: MemoryWithPhotos[];
   totalExpenses: number;
 }
 
@@ -67,13 +67,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     throw new Response("Trip not found", { status: 404 });
   }
 
-  const entries = await context.repos.entries.findByTripWithPhotos(tripId, 3);
+  const memories = await context.repos.memories.findByTripWithPhotos(tripId, 3);
   const totalExpenses = await context.repos.expenses.sumByTrip(tripId);
 
   return data({
     trip: {
       ...trip,
-      entries,
+      memories,
       totalExpenses,
     },
     user,
@@ -114,7 +114,7 @@ const statusLabels: Record<TripStatus, string> = {
   COMPLETED: "Completed",
 };
 
-const categoryIcons: Record<EntryCategory, string> = {
+const categoryIcons: Record<MemoryCategory, string> = {
   ACCOMMODATION: "🏨",
   FOOD: "🍽️",
   ACTIVITY: "🎯",
@@ -123,7 +123,7 @@ const categoryIcons: Record<EntryCategory, string> = {
   OTHER: "📝",
 };
 
-const categoryLabels: Record<EntryCategory, string> = {
+const categoryLabels: Record<MemoryCategory, string> = {
   ACCOMMODATION: "Accommodation",
   FOOD: "Food & Dining",
   ACTIVITY: "Activity",
@@ -160,12 +160,12 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
     : 0;
   const isOverBudget = trip.budget && trip.totalExpenses > trip.budget;
 
-  // Get all photos from entries
-  const allPhotos = trip.entries.flatMap((entry: EntryWithPhotos) =>
-    entry.photos.map((photo: Pick<Photo, "id" | "url" | "thumbnail">) => ({
+  // Get all photos from memories
+  const allPhotos = trip.memories.flatMap((memory: MemoryWithPhotos) =>
+    memory.photos.map((photo: Pick<Photo, "id" | "url" | "thumbnail">) => ({
       ...photo,
-      entryId: entry.id,
-      entryTitle: entry.title,
+      memoryId: memory.id,
+      memoryTitle: memory.title,
     }))
   );
 
@@ -204,8 +204,8 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             <div className="flex items-center gap-1.5">
               <BookOpen className="h-4 w-4" />
               <span>
-                {trip.entriesCount} entr
-                {trip.entriesCount === 1 ? "y" : "ies"}
+                {trip.memoriesCount}{" "}
+                {trip.memoriesCount === 1 ? "memory" : "memories"}
               </span>
             </div>
             {trip.budget && (
@@ -222,9 +222,9 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
 
         <div className="flex gap-2">
           <Button asChild>
-            <Link to={`/trips/${trip.id}/entries/new`}>
+            <Link to={`/trips/${trip.id}/memories/new`}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Entry
+              Add Memory
             </Link>
           </Button>
           <Button variant="outline" asChild>
@@ -251,7 +251,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                 <AlertDialogTitle>Delete Trip</AlertDialogTitle>
                 <AlertDialogDescription>
                   Are you sure you want to delete "{trip.title}"? This will
-                  permanently delete the trip and all its entries, photos, and
+                  permanently delete the trip and all its memories, photos, and
                   expenses. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -332,75 +332,75 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
 
         {/* Timeline Tab */}
         <TabsContent value="timeline">
-          {trip.entries.length === 0 ? (
+          {trip.memories.length === 0 ? (
             <Card className="py-12 text-center">
               <CardContent>
                 <BookOpen className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                <h2 className="mb-2 text-xl font-semibold">No entries yet</h2>
+                <h2 className="mb-2 text-xl font-semibold">No memories yet</h2>
                 <p className="text-muted-foreground mb-6">
-                  Start documenting your journey by adding your first entry
+                  Start documenting your journey by adding your first memory
                 </p>
                 <Button asChild>
-                  <Link to={`/trips/${trip.id}/entries/new`}>
+                  <Link to={`/trips/${trip.id}/memories/new`}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Add First Entry
+                    Add First Memory
                   </Link>
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
-              {trip.entries.map((entry: EntryWithPhotos) => (
+              {trip.memories.map((memory: MemoryWithPhotos) => (
                 <Link
-                  key={entry.id}
-                  to={`/trips/${trip.id}/entries/${entry.id}`}
+                  key={memory.id}
+                  to={`/trips/${trip.id}/memories/${memory.id}`}
                 >
                   <Card className="transition-shadow hover:shadow-md">
                     <CardContent className="flex gap-4 py-4">
-                      {/* Entry Photo Preview */}
-                      {entry.photos.length > 0 ? (
+                      {/* Memory Photo Preview */}
+                      {memory.photos.length > 0 ? (
                         <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
                           <img
                             src={
-                              entry.photos[0].thumbnail || entry.photos[0].url
+                              memory.photos[0].thumbnail || memory.photos[0].url
                             }
                             alt=""
                             className="h-full w-full object-cover"
                           />
-                          {entry.photos.length > 1 && (
+                          {memory.photos.length > 1 && (
                             <div className="absolute right-1 bottom-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">
-                              +{entry.photos.length - 1}
+                              +{memory.photos.length - 1}
                             </div>
                           )}
                         </div>
                       ) : (
                         <div className="bg-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-2xl">
-                          {categoryIcons[entry.category]}
+                          {categoryIcons[memory.category]}
                         </div>
                       )}
 
-                      {/* Entry Details */}
+                      {/* Memory Details */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <h2 className="line-clamp-1 font-semibold">
-                            {entry.title}
+                            {memory.title}
                           </h2>
-                          {entry.rating && (
+                          {memory.rating && (
                             <div className="flex items-center gap-0.5 text-yellow-500">
-                              {"★".repeat(entry.rating)}
-                              {"☆".repeat(5 - entry.rating)}
+                              {"★".repeat(memory.rating)}
+                              {"☆".repeat(5 - memory.rating)}
                             </div>
                           )}
                         </div>
                         <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-sm">
-                          <span>{formatDate(entry.date)}</span>
+                          <span>{formatDate(memory.date)}</span>
                           <Badge variant="outline" className="text-xs">
-                            {categoryLabels[entry.category]}
+                            {categoryLabels[memory.category]}
                           </Badge>
-                          {entry.locationName && (
+                          {memory.locationName && (
                             <span className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
-                              {entry.locationName}
+                              {memory.locationName}
                             </span>
                           )}
                         </div>
@@ -435,7 +435,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                 <Image className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
                 <h2 className="mb-2 text-xl font-semibold">No photos yet</h2>
                 <p className="text-muted-foreground">
-                  Add photos to your entries to see them here
+                  Add photos to your memories to see them here
                 </p>
               </CardContent>
             </Card>
@@ -444,12 +444,12 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
               {allPhotos.map((photo: (typeof allPhotos)[number]) => (
                 <Link
                   key={photo.id}
-                  to={`/trips/${trip.id}/entries/${photo.entryId}`}
+                  to={`/trips/${trip.id}/memories/${photo.memoryId}`}
                   className="group relative aspect-square overflow-hidden rounded-lg"
                 >
                   <img
                     src={photo.thumbnail || photo.url}
-                    alt={photo.entryTitle}
+                    alt={photo.memoryTitle}
                     className="h-full w-full object-cover transition-transform group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/30" />

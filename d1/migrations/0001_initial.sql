@@ -59,7 +59,7 @@ CREATE TABLE "Trip" (
 );
 
 -- CreateTable
-CREATE TABLE "Entry" (
+CREATE TABLE "Memory" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "tripId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -77,20 +77,20 @@ CREATE TABLE "Entry" (
     "slug" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Entry_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Entry_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Memory_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Memory_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Photo" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "entryId" TEXT NOT NULL,
+    "memoryId" TEXT NOT NULL,
     "url" TEXT NOT NULL,
     "thumbnail" TEXT,
     "caption" TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Photo_entryId_fkey" FOREIGN KEY ("entryId") REFERENCES "Entry" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Photo_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -98,7 +98,7 @@ CREATE TABLE "Expense" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "tripId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "entryId" TEXT,
+    "memoryId" TEXT,
     "amount" REAL NOT NULL,
     "currency" TEXT NOT NULL,
     "category" TEXT NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE "Expense" (
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Expense_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Expense_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Expense_entryId_fkey" FOREIGN KEY ("entryId") REFERENCES "Entry" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "Expense_memoryId_fkey" FOREIGN KEY ("memoryId") REFERENCES "Memory" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateIndex
@@ -151,22 +151,22 @@ CREATE INDEX "Trip_isPublic_idx" ON "Trip"("isPublic");
 CREATE UNIQUE INDEX "Trip_userId_slug_key" ON "Trip"("userId", "slug");
 
 -- CreateIndex
-CREATE INDEX "Entry_tripId_idx" ON "Entry"("tripId");
+CREATE INDEX "Memory_tripId_idx" ON "Memory"("tripId");
 
 -- CreateIndex
-CREATE INDEX "Entry_userId_idx" ON "Entry"("userId");
+CREATE INDEX "Memory_userId_idx" ON "Memory"("userId");
 
 -- CreateIndex
-CREATE INDEX "Entry_date_idx" ON "Entry"("date");
+CREATE INDEX "Memory_date_idx" ON "Memory"("date");
 
 -- CreateIndex
-CREATE INDEX "Entry_category_idx" ON "Entry"("category");
+CREATE INDEX "Memory_category_idx" ON "Memory"("category");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Entry_tripId_slug_key" ON "Entry"("tripId", "slug");
+CREATE UNIQUE INDEX "Memory_tripId_slug_key" ON "Memory"("tripId", "slug");
 
 -- CreateIndex
-CREATE INDEX "Photo_entryId_idx" ON "Photo"("entryId");
+CREATE INDEX "Photo_memoryId_idx" ON "Photo"("memoryId");
 
 -- CreateIndex
 CREATE INDEX "Expense_tripId_idx" ON "Expense"("tripId");

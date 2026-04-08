@@ -64,8 +64,8 @@ export default function Home() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={<BookOpen className="text-primary h-10 w-10" />}
-            title="Rich Journal Entries"
-            description="Write detailed entries with photos, locations, and ratings for each experience."
+            title="Rich Travel Memories"
+            description="Write detailed memories with photos, locations, and ratings for each experience."
           />
           <FeatureCard
             icon={<MapPin className="text-primary h-10 w-10" />}

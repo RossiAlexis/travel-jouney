@@ -1,6 +1,6 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import { AccountRepository } from "./account.repository";
-import { EntryRepository } from "./entry.repository";
+import { MemoryRepository } from "./memory.repository";
 import { ExpenseRepository } from "./expense.repository";
 import { SessionRepository } from "./session.repository";
 import { TripRepository } from "./trip.repository";
@@ -11,7 +11,7 @@ export interface Repositories {
   accounts: AccountRepository;
   sessions: SessionRepository;
   trips: TripRepository;
-  entries: EntryRepository;
+  memories: MemoryRepository;
   expenses: ExpenseRepository;
 }
 
@@ -21,14 +21,14 @@ export function createRepositories(db: D1Database): Repositories {
     accounts: new AccountRepository(db),
     sessions: new SessionRepository(db),
     trips: new TripRepository(db),
-    entries: new EntryRepository(db),
+    memories: new MemoryRepository(db),
     expenses: new ExpenseRepository(db),
   };
 }
 
 export {
   AccountRepository,
-  EntryRepository,
+  MemoryRepository,
   ExpenseRepository,
   SessionRepository,
   TripRepository,

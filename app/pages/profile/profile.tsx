@@ -72,8 +72,8 @@ export default function Profile() {
             </div>
             <div className="rounded-lg border p-4 text-center">
               <BookOpen className="text-primary mx-auto mb-2 h-6 w-6" />
-              <p className="text-2xl font-bold">{stats?.entriesCount ?? 0}</p>
-              <p className="text-muted-foreground text-sm">Entries</p>
+              <p className="text-2xl font-bold">{stats?.memoriesCount ?? 0}</p>
+              <p className="text-muted-foreground text-sm">Memories</p>
             </div>
             <div className="col-span-2 rounded-lg border p-4 text-center sm:col-span-1">
               <Calendar className="text-primary mx-auto mb-2 h-6 w-6" />

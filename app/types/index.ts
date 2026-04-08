@@ -1,17 +1,17 @@
 export type {
-  EntryCategory,
+  MemoryCategory,
   ExpenseCategory,
   TripStatus,
   Account,
   DashboardTrip,
-  Entry,
+  Memory,
   Expense,
   Photo,
   Session,
   Trip,
   User,
 } from "~/lib/schemas";
-import type { EntryWithPhotos, Expense, Trip } from "~/lib/schemas";
+import type { MemoryWithPhotos, Expense, Trip } from "~/lib/schemas";
 
 // App-specific types
 export interface SessionUser {
@@ -22,14 +22,14 @@ export interface SessionUser {
   avatar: string | null;
 }
 
-export interface TripWithEntries extends Trip {
-  entries: EntryWithPhotos[];
+export interface TripWithMemories extends Trip {
+  memories: MemoryWithPhotos[];
 }
 
 export interface TripWithAll extends Trip {
-  entries: EntryWithPhotos[];
+  memories: MemoryWithPhotos[];
   expenses: Expense[];
-  entriesCount: number;
+  memoriesCount: number;
   expensesCount: number;
   totalExpenses: number;
 }
@@ -41,4 +41,3 @@ export interface ActionResult<T = unknown> {
   data?: T;
   errors?: Record<string, string[]>;
 }
-

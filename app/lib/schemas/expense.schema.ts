@@ -5,7 +5,7 @@ export const expenseSchema = z.object({
   id: z.string(),
   tripId: z.string(),
   userId: z.string(),
-  entryId: z.string().nullable(),
+  memoryId: z.string().nullable(),
   amount: z.number(),
   currency: z.string(),
   category: expenseCategorySchema,

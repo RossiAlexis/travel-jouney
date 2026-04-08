@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const tripStatusSchema = z.enum(["PLANNED", "ONGOING", "COMPLETED"]);
 
-export const entryCategorySchema = z.enum([
+export const memoryCategorySchema = z.enum([
   "ACCOMMODATION",
   "FOOD",
   "ACTIVITY",
@@ -21,7 +21,7 @@ export const expenseCategorySchema = z.enum([
 ]);
 
 export type TripStatus = z.infer<typeof tripStatusSchema>;
-export type EntryCategory = z.infer<typeof entryCategorySchema>;
+export type MemoryCategory = z.infer<typeof memoryCategorySchema>;
 export type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
 
 export const sqliteDateSchema = z

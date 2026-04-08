@@ -23,12 +23,12 @@ export const tripSchema = z.object({
 });
 
 export const tripWithCountsSchema = tripSchema.extend({
-  entriesCount: z.number().int().nonnegative(),
+  memoriesCount: z.number().int().nonnegative(),
   expensesCount: z.number().int().nonnegative(),
 });
 
 export const dashboardTripSchema = tripSchema.extend({
-  entriesCount: z.number().int().nonnegative(),
+  memoriesCount: z.number().int().nonnegative(),
 });
 
 export type Trip = z.infer<typeof tripSchema>;

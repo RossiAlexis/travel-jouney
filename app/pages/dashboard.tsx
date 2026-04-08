@@ -128,7 +128,7 @@ interface TripCardProps {
     startDate: Date | string;
     endDate: Date | string | null;
     status: TripStatus;
-    entriesCount: number;
+    memoriesCount: number;
   };
 }
 
@@ -189,7 +189,8 @@ function TripCard({ trip }: TripCardProps) {
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
               <span>
-                {trip.entriesCount} entry{trip.entriesCount === 1 ? "" : "s"}
+                {trip.memoriesCount}{" "}
+                {trip.memoriesCount === 1 ? "memory" : "memories"}
               </span>
             </div>
           </div>
