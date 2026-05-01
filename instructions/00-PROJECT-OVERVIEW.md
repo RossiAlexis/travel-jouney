@@ -27,31 +27,76 @@ Medium structure: Not backpacker style but not overly structured either. Balance
 
 ### Frontend
 
-- **Framework**: React Router (framework mode) for SSR and routing
-- **Linting**: ESLint
-- **Formatting**: Prettier
+- **Framework**: React 19 + React Router v7 (framework mode, SSR enabled)
+- **Runtime**: Cloudflare Workers (via `@react-router/cloudflare`)
+- **Database**: Cloudflare D1 (SQLite, managed via raw SQL migrations in `d1/migrations/`)
+- **Linting**: ESLint (flat config, TypeScript + React + Prettier)
+- **Formatting**: Prettier with Tailwind plugin
 - **Styling**: Tailwind CSS v4
-- **Components**: shadcn/ui
-- **Forms**: Conform with Zod validation
-- **State Management**: React Router loaders/actions + React state
-- **Unit and Integration tests**: Vitest + React Testing Library
-- **E2E tests**: Playwright
-- **Rich text editor**: Tiptap
-- **Maps**: Leaflet or Mapbox
-- **Image handling**: TBD
+- **Components**: shadcn/ui (Radix Nova preset) + Radix UI primitives + Lucide React icons
+- **Notifications**: Sonner (toast)
+- **Theme**: next-themes
+- **Forms**: Conform (`@conform-to/react` + `@conform-to/zod`) with Zod v4 validation
+- **ID generation**: CUID2 (`@paralleldrive/cuid2`)
+- **Unit and Integration tests**: Vitest + React Testing Library + jest-axe (accessibility)
+- **E2E tests**: Playwright + `@axe-core/playwright` (accessibility)
+- **Build**: Vite 7 with `@cloudflare/vite-plugin`
 
 ### Backend
 
-- **Runtime**: Node.js
-- **Database**: SQLite with Prisma ORM
-- **Unit and Integration tests**: Vitest
-- **File storage**: TBD (local for dev, Cloudinary/S3 for production)
-- **Authentication**: TBD (JWT or session-based)
+- **Runtime**: Cloudflare Workers (same process as frontend via React Router loaders/actions)
+- **Database**: Cloudflare D1 (SQLite) — local dev via Wrangler, remote via D1 managed service
+- **Authentication**: Cookie-based sessions (30-day expiry) + PBKDF2 password hashing (Web Crypto API) + Google OAuth 2.0
+- **Architecture**: Repository pattern (`app/lib/repositories/`) with Zod schema validation, `Result<T>` type for typed error handling
 
 ### AI Integration
 
-- **MCP Server**: Custom implementation for travel journal operations
+- **MCP Server**: Custom implementation for travel journal operations (planned — Phase 2)
 - **AI Models**: Claude (via Anthropic API) through MCP clients
+
+### Deployment
+
+- **Platform**: Cloudflare Workers
+- **Database**: Cloudflare D1
+- **Deploy command**: `npm run deploy:cloudflare` (migrate → seed → build → deploy)
+- **Dev**: `npm run dev` (Vite dev server) or `npm run preview` (Wrangler)
+
+## Architecture
+
+### Key Patterns
+
+- **Repository pattern**: `app/lib/repositories/` — `UserRepository`, `SessionRepository`, `TripRepository`, `MemoryRepository`, `ExpenseRepository`, `AccountRepository`
+- **Schema validation**: `app/lib/schemas/` — Zod schemas for all domain entities, validated at DB/API boundaries
+- **Result type**: `app/lib/result.ts` — `Result<T>` with `ok()` / `err()` for typed error handling without exceptions
+- **Server context**: `AppLoadContext` provides Cloudflare env (DB, secrets), `ExecutionContext`, and all repositories to loaders/actions
+- **Authentication helpers**: `requireAuth()` for protected routes, `getUser()` for optional checks
+
+### Project Structure
+
+```
+/
+├── app/
+│   ├── components/
+│   │   ├── layout/        ← AppShell, navigation
+│   │   └── ui/            ← shadcn/ui components
+│   ├── lib/
+│   │   ├── repositories/  ← Data access layer (D1 queries)
+│   │   ├── schemas/       ← Zod entity schemas
+│   │   ├── auth.server.ts ← Session + password helpers
+│   │   ├── result.ts      ← Result<T> type
+│   │   └── validations.ts ← Form validation utilities
+│   ├── routes/            ← React Router route modules
+│   └── routes.ts          ← Code-based routing config
+├── workers/
+│   └── app.ts             ← Cloudflare Worker entry (createRepositories, AppLoadContext)
+├── d1/
+│   └── migrations/        ← Raw SQL migration files
+├── tests/
+│   ├── unit/              ← Vitest unit tests
+│   └── e2e/               ← Playwright E2E tests
+├── wrangler.toml          ← Production Cloudflare config
+└── wrangler.e2e.toml      ← E2E test config (isolated DB)
+```
 
 ## Development Approach
 
@@ -59,28 +104,37 @@ Using AI Agents for accelerated development with clear specifications and iterat
 
 ## Project Phases
 
-### Phase 1: MVP (Minimum Viable Product)
+### Phase 1: MVP ✅ COMPLETED
 
-- User authentication
-- Trip management (CRUD)
-- Journal entries with text and photos
-- Private-only mode
+- ✅ User authentication (email/password + Google OAuth 2.0, session cookies)
+- ✅ Password reset flow (token-based)
+- ✅ Trip management (create, view, edit — status: PLANNED/ONGOING/COMPLETED, budget, currency)
+- ✅ Memory/journal entries (create, view, edit — with location, category, rating, photos schema)
+- ✅ Expense tracking (create, view — linked to trip and optional memory, multi-currency)
+- ✅ User profile (view and edit — displayName, avatar, bio)
+- ✅ App shell layout with authenticated navigation
+- ✅ Unit tests (auth, validations, accessibility)
+- ✅ E2E tests (full user flows: register → trip → memory, with accessibility checks)
+- ✅ Migrated to Cloudflare Workers + D1 (from Node.js + Prisma)
 
-### Phase 2: AI & Sharing
+### Phase 2: AI & Sharing 🚧 IN PROGRESS
 
-- MCP server implementation
-- AI-assisted entry creation
-- Public sharing functionality
-- Export capabilities
+- ⬜ Public sharing routes (`/:username`, `/:username/:tripSlug`, `/:username/:tripSlug/:memorySlug`) — schema ready (`isPublic`, `slug` fields exist), routes commented out
+- ⬜ Trip/memory slug generation on publish
+- ⬜ MCP server implementation for AI-assisted journaling
+- ⬜ AI-assisted entry creation (Claude via Anthropic API)
+- ⬜ Export capabilities
 
-### Phase 3: Advanced Features
+### Phase 3: Advanced Features ⬜ PLANNED
 
-- Basic expense tracking
-- Timeline and map visualization
-- Statistics and analytics
-- Collaboration features
-- Offline support (PWA)
-- Advanced search
+- ⬜ Rich text editor (Tiptap)
+- ⬜ Map visualization (Leaflet or Mapbox)
+- ⬜ Photo upload and management (Cloudinary or R2)
+- ⬜ Timeline view
+- ⬜ Statistics and analytics
+- ⬜ Collaboration features
+- ⬜ Offline support (PWA)
+- ⬜ Advanced search
 
 ## Success Metrics
 

@@ -39,6 +39,12 @@ export default [
     route("trips/:tripId/memories/:memoryId", "pages/trips/memory-detail.tsx"),
     route("trips/:tripId/memories/:memoryId/edit", "pages/trips/memory-edit.tsx"),
 
+    // Destination routes
+    route("trips/:tripId/destinations/new", "pages/trips/destination-new.tsx"),
+    route("trips/:tripId/destinations/:destinationId", "pages/trips/destination-detail.tsx"),
+    route("trips/:tripId/destinations/:destinationId/edit", "pages/trips/destination-edit.tsx"),
+    route("trips/:tripId/destinations/:destinationId/memories/new", "pages/trips/destination-memory-new.tsx"),
+
     // Expenses view
     route("trips/:tripId/expenses", "pages/trips/expenses.tsx"),
   ]),

@@ -31,10 +31,17 @@ import {
   Receipt,
 } from "lucide-react";
 import type { TripStatus, MemoryCategory } from "~/types";
-import type { MemoryWithPhotos, Photo, TripWithCounts } from "~/lib/schemas";
+import type {
+  MemoryWithPhotos,
+  Photo,
+  TripWithCounts,
+  DestinationWithMemoryCount,
+} from "~/lib/schemas";
 
 interface TripDetailData extends TripWithCounts {
   memories: MemoryWithPhotos[];
+  destinations: DestinationWithMemoryCount[];
+  tripLevelMemories: MemoryWithPhotos[];
   totalExpenses: number;
 }
 
@@ -60,20 +67,27 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const trip = await context.repos.trips.findByIdWithCountsForUser(
     tripId,
-    user.id
+    user.id,
   );
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
-  const memories = await context.repos.memories.findByTripWithPhotos(tripId, 3);
-  const totalExpenses = await context.repos.expenses.sumByTrip(tripId);
+  const [memories, destinations, tripLevelMemories, totalExpenses] =
+    await Promise.all([
+      context.repos.memories.findByTripWithPhotos(tripId, 3),
+      context.repos.destinations.findByTrip(tripId),
+      context.repos.memories.findTripLevelMemories(tripId),
+      context.repos.expenses.sumByTrip(tripId),
+    ]);
 
   return data({
     trip: {
       ...trip,
       memories,
+      destinations,
+      tripLevelMemories,
       totalExpenses,
     },
     user,
@@ -87,7 +101,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const intent = formData.get("intent");
 
   if (intent === "delete") {
-    // Verify ownership
     const trip = await context.repos.trips.findByIdForUser(tripId, user.id);
 
     if (!trip) {
@@ -132,6 +145,75 @@ const categoryLabels: Record<MemoryCategory, string> = {
   OTHER: "Other",
 };
 
+function MemoryCard({
+  memory,
+  tripId,
+}: {
+  memory: MemoryWithPhotos;
+  tripId: string;
+}) {
+  const formatDate = (date: Date | string) => {
+    const d = typeof date === "string" ? new Date(date) : date;
+    return d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  return (
+    <Link to={`/trips/${tripId}/memories/${memory.id}`}>
+      <Card className="transition-shadow hover:shadow-md">
+        <CardContent className="flex gap-4 py-4">
+          {memory.photos.length > 0 ? (
+            <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+              <img
+                src={memory.photos[0].thumbnail || memory.photos[0].url}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+              {memory.photos.length > 1 && (
+                <div className="absolute right-1 bottom-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">
+                  +{memory.photos.length - 1}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-2xl">
+              {categoryIcons[memory.category]}
+            </div>
+          )}
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="line-clamp-1 font-semibold">{memory.title}</h3>
+              {memory.rating && (
+                <div className="flex items-center gap-0.5 text-yellow-500">
+                  {"★".repeat(memory.rating)}
+                  {"☆".repeat(5 - memory.rating)}
+                </div>
+              )}
+            </div>
+            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-sm">
+              <span>{formatDate(memory.date)}</span>
+              <Badge variant="outline" className="text-xs">
+                {categoryLabels[memory.category]}
+              </Badge>
+              {memory.locationName && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {memory.locationName}
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 export default function TripDetail({ loaderData }: Route.ComponentProps) {
   const trip = loaderData.trip as TripDetailData;
   const deleteFetcher = useFetcher();
@@ -142,6 +224,17 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
     const dateObj = typeof date === "string" ? new Date(date) : date;
     return dateObj.toLocaleDateString("en-US", {
       weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatDestinationDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -160,14 +253,15 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
     : 0;
   const isOverBudget = trip.budget && trip.totalExpenses > trip.budget;
 
-  // Get all photos from memories
   const allPhotos = trip.memories.flatMap((memory: MemoryWithPhotos) =>
     memory.photos.map((photo: Pick<Photo, "id" | "url" | "thumbnail">) => ({
       ...photo,
       memoryId: memory.id,
       memoryTitle: memory.title,
-    }))
+    })),
   );
+
+  const hasDestinations = trip.destinations.length > 0;
 
   return (
     <div className="space-y-6">
@@ -190,9 +284,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
           </div>
 
           {trip.description && (
-            <p className="text-muted-foreground max-w-2xl">
-              {trip.description}
-            </p>
+            <p className="text-muted-foreground max-w-2xl">{trip.description}</p>
           )}
 
           <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
@@ -208,6 +300,17 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                 {trip.memoriesCount === 1 ? "memory" : "memories"}
               </span>
             </div>
+            {hasDestinations && (
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4" />
+                <span>
+                  {trip.destinations.length}{" "}
+                  {trip.destinations.length === 1
+                    ? "destination"
+                    : "destinations"}
+                </span>
+              </div>
+            )}
             {trip.budget && (
               <div className="flex items-center gap-1.5">
                 <DollarSign className="h-4 w-4" />
@@ -220,11 +323,17 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button asChild>
             <Link to={`/trips/${trip.id}/memories/new`}>
               <Plus className="mr-2 h-4 w-4" />
               Add Memory
+            </Link>
+          </Button>
+          <Button variant="secondary" asChild>
+            <Link to={`/trips/${trip.id}/destinations/new`}>
+              <MapPin className="mr-2 h-4 w-4" />
+              Add Destination
             </Link>
           </Button>
           <Button variant="outline" asChild>
@@ -280,9 +389,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-medium">Budget</span>
               <span
-                className={`text-sm font-medium ${
-                  isOverBudget ? "text-destructive" : ""
-                }`}
+                className={`text-sm font-medium ${isOverBudget ? "text-destructive" : ""}`}
               >
                 {formatCurrency(trip.totalExpenses, trip.currency)} of{" "}
                 {formatCurrency(trip.budget, trip.currency)}
@@ -290,9 +397,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             </div>
             <div className="bg-muted h-2 overflow-hidden rounded-full">
               <div
-                className={`h-full transition-all ${
-                  isOverBudget ? "bg-destructive" : "bg-primary"
-                }`}
+                className={`h-full transition-all ${isOverBudget ? "bg-destructive" : "bg-primary"}`}
                 style={{ width: `${budgetProgress}%` }}
               />
             </div>
@@ -301,7 +406,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                 Over budget by{" "}
                 {formatCurrency(
                   trip.totalExpenses - trip.budget,
-                  trip.currency
+                  trip.currency,
                 )}
               </p>
             )}
@@ -316,6 +421,12 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             <BookOpen className="h-4 w-4" />
             Timeline
           </TabsTrigger>
+          {hasDestinations && (
+            <TabsTrigger value="destinations">
+              <MapPin className="mr-2 h-4 w-4" />
+              Destinations
+            </TabsTrigger>
+          )}
           <TabsTrigger value="map">
             <Map className="mr-2 h-4 w-4" />
             Map
@@ -351,67 +462,107 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
           ) : (
             <div className="space-y-4">
               {trip.memories.map((memory: MemoryWithPhotos) => (
-                <Link
-                  key={memory.id}
-                  to={`/trips/${trip.id}/memories/${memory.id}`}
-                >
-                  <Card className="transition-shadow hover:shadow-md">
-                    <CardContent className="flex gap-4 py-4">
-                      {/* Memory Photo Preview */}
-                      {memory.photos.length > 0 ? (
-                        <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
-                          <img
-                            src={
-                              memory.photos[0].thumbnail || memory.photos[0].url
-                            }
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                          {memory.photos.length > 1 && (
-                            <div className="absolute right-1 bottom-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white">
-                              +{memory.photos.length - 1}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="bg-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-2xl">
-                          {categoryIcons[memory.category]}
-                        </div>
-                      )}
-
-                      {/* Memory Details */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <h2 className="line-clamp-1 font-semibold">
-                            {memory.title}
-                          </h2>
-                          {memory.rating && (
-                            <div className="flex items-center gap-0.5 text-yellow-500">
-                              {"★".repeat(memory.rating)}
-                              {"☆".repeat(5 - memory.rating)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-sm">
-                          <span>{formatDate(memory.date)}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {categoryLabels[memory.category]}
-                          </Badge>
-                          {memory.locationName && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {memory.locationName}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <MemoryCard key={memory.id} memory={memory} tripId={trip.id} />
               ))}
             </div>
           )}
         </TabsContent>
+
+        {/* Destinations Tab */}
+        {hasDestinations && (
+          <TabsContent value="destinations">
+            <div className="space-y-6">
+              {/* Destination cards */}
+              <div className="space-y-4">
+                {trip.destinations.map(
+                  (dest: DestinationWithMemoryCount) => {
+                    const startLabel = formatDestinationDate(dest.startDate);
+                    const endLabel = formatDestinationDate(dest.endDate);
+
+                    return (
+                      <Link
+                        key={dest.id}
+                        to={`/trips/${trip.id}/destinations/${dest.id}`}
+                      >
+                        <Card className="transition-shadow hover:shadow-md">
+                          <CardContent className="py-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="text-muted-foreground h-4 w-4 shrink-0" />
+                                  <h3 className="font-semibold">{dest.name}</h3>
+                                </div>
+                                {dest.description && (
+                                  <p className="text-muted-foreground line-clamp-2 text-sm">
+                                    {dest.description}
+                                  </p>
+                                )}
+                                <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
+                                  {(startLabel || endLabel) && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {startLabel}
+                                      {startLabel && endLabel && " — "}
+                                      {endLabel}
+                                    </span>
+                                  )}
+                                  <span className="flex items-center gap-1">
+                                    <BookOpen className="h-3 w-3" />
+                                    {dest.memoriesCount}{" "}
+                                    {dest.memoriesCount === 1
+                                      ? "memory"
+                                      : "memories"}
+                                  </span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="shrink-0"
+                                asChild
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Link
+                                  to={`/trips/${trip.id}/destinations/${dest.id}/memories/new`}
+                                >
+                                  <Plus className="mr-1 h-3 w-3" />
+                                  Add
+                                </Link>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  },
+                )}
+              </div>
+
+              {/* General memories (trip-level, no destination) */}
+              {trip.tripLevelMemories.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-muted-foreground text-sm font-medium uppercase tracking-wide">
+                    General Memories
+                  </h3>
+                  {trip.tripLevelMemories.map((memory: MemoryWithPhotos) => (
+                    <MemoryCard
+                      key={memory.id}
+                      memory={memory}
+                      tripId={trip.id}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <Button variant="outline" asChild className="w-full">
+                <Link to={`/trips/${trip.id}/destinations/new`}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Another Destination
+                </Link>
+              </Button>
+            </div>
+          </TabsContent>
+        )}
 
         {/* Map Tab */}
         <TabsContent value="map">

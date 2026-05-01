@@ -17,3 +17,5 @@ export type { Memory, MemoryWithPhotos, Photo } from "./memory.schema";
 export { memorySchema, memoryWithPhotosSchema, photoSchema } from "./memory.schema";
 export type { Expense } from "./expense.schema";
 export { expenseSchema } from "./expense.schema";
+export type { Destination, DestinationWithMemoryCount } from "./destination.schema";
+export { destinationSchema, destinationWithMemoryCountSchema } from "./destination.schema";

@@ -19,6 +19,7 @@ export const memorySchema = z.object({
   id: z.string(),
   tripId: z.string(),
   userId: z.string(),
+  destinationId: z.string().nullable(),
   title: z.string(),
   content: z.string(),
   date: sqliteDateSchema,
