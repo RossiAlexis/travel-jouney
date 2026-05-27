@@ -1,0 +1,17 @@
+name = "travel-journal-e2e"
+main = "workers/app.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "travel-journal-e2e-db"
+database_id = "11111111-2222-3333-4444-555555555555"
+migrations_dir = "d1/migrations"
+
+[vars]
+NODE_ENV = "test"
+
+[dev]
+port = 4173
+local_protocol = "http"

@@ -8,5 +8,5 @@ export async function loader() {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  return logout(context.db, request);
+  return logout(context.repos, request);
 }

@@ -4,9 +4,10 @@ import type { Route } from "./+types/google";
 // Google OAuth configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_REDIRECT_URI =
-  process.env.GOOGLE_REDIRECT_URI || "http://localhost:5173/auth/google/callback";
+  process.env.GOOGLE_REDIRECT_URI ||
+  "http://localhost:5173/auth/google/callback";
 
-export async function loader({}: Route.LoaderArgs) {
+export async function loader(_args: Route.LoaderArgs) {
   if (!GOOGLE_CLIENT_ID) {
     // Google OAuth not configured, redirect to login with error
     throw redirect("/login?error=oauth_not_configured");
@@ -31,4 +32,3 @@ export default function GoogleAuth() {
   // This component should never render as the loader always redirects
   return null;
 }
-

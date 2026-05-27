@@ -1,4 +1,4 @@
-import { Link, Form, useActionData, useNavigation } from "react-router";
+import { Link, Form, useNavigation } from "react-router";
 import { data, redirect } from "react-router";
 import type { Route } from "./+types/login";
 import { parseWithZod } from "@conform-to/zod/v4";
@@ -18,7 +18,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { MapPin, AlertCircle } from "lucide-react";
@@ -32,7 +31,7 @@ export function meta() {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   // Redirect to dashboard if already logged in
-  const user = await getUser(context.db, request);
+  const user = await getUser(context.repos, request);
   if (user) {
     throw redirect("/dashboard");
   }
@@ -50,16 +49,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     );
   }
 
-  const result = await loginWithPassword(context.db, submission.value);
+  const result = await loginWithPassword(context.repos, submission.value);
 
-  if ("error" in result) {
+  if (!result.ok) {
     return data(
       { submission: submission.reply(), error: result.error },
       { status: 400 }
     );
   }
 
-  return createUserSession(context.db, result.user.id, "/dashboard");
+  return createUserSession(context.repos, result.value.id, "/dashboard");
 }
 
 export default function Login({ actionData }: Route.ComponentProps) {
@@ -76,13 +75,17 @@ export default function Login({ actionData }: Route.ComponentProps) {
   });
 
   return (
-    <div className="from-background to-muted flex min-h-screen items-center justify-center bg-gradient-to-b px-4">
+    <main className="from-background to-muted flex min-h-screen items-center justify-center bg-gradient-to-b px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <Link to="/" className="mb-4 flex justify-center">
+          <Link
+            to="/"
+            className="mb-4 flex justify-center"
+            aria-label="Go to home"
+          >
             <MapPin className="text-primary h-10 w-10" />
           </Link>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <h1 className="text-2xl font-medium">Welcome back</h1>
           <CardDescription>
             Enter your credentials to access your journal
           </CardDescription>
@@ -196,12 +199,15 @@ export default function Login({ actionData }: Route.ComponentProps) {
         <CardFooter className="flex justify-center">
           <p className="text-muted-foreground text-sm">
             Don&apos;t have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline">
+            <Link
+              to="/register"
+              className="text-primary underline underline-offset-4 hover:no-underline"
+            >
               Sign up
             </Link>
           </p>
         </CardFooter>
       </Card>
-    </div>
+    </main>
   );
 }

@@ -1,4 +1,4 @@
-import { Link, Form, useActionData, useNavigation } from "react-router";
+import { Link, Form, useNavigation } from "react-router";
 import { data } from "react-router";
 import type { Route } from "./+types/forgot-password";
 import { parseWithZod } from "@conform-to/zod/v4";
@@ -13,7 +13,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { MapPin, CheckCircle } from "lucide-react";
@@ -57,13 +56,17 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
   });
 
   return (
-    <div className="from-background to-muted flex min-h-screen items-center justify-center bg-gradient-to-b px-4">
+    <main className="from-background to-muted flex min-h-screen items-center justify-center bg-gradient-to-b px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <Link to="/" className="mb-4 flex justify-center">
+          <Link
+            to="/"
+            className="mb-4 flex justify-center"
+            aria-label="Go to home"
+          >
             <MapPin className="text-primary h-10 w-10" />
           </Link>
-          <CardTitle className="text-2xl">Forgot password?</CardTitle>
+          <h1 className="text-2xl font-medium">Forgot password?</h1>
           <CardDescription>
             Enter your email and we&apos;ll send you a reset link
           </CardDescription>
@@ -118,12 +121,15 @@ export default function ForgotPassword({ actionData }: Route.ComponentProps) {
         <CardFooter className="flex justify-center">
           <p className="text-muted-foreground text-sm">
             Remember your password?{" "}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link
+              to="/login"
+              className="text-primary underline underline-offset-4 hover:no-underline"
+            >
               Sign in
             </Link>
           </p>
         </CardFooter>
       </Card>
-    </div>
+    </main>
   );
 }

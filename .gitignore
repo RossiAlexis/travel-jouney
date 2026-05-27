@@ -14,3 +14,11 @@
 # SQLite (legacy, can be removed)
 *.db
 *.db-journal
+
+# Test artifacts
+/playwright-report/
+/test-results/
+/coverage/
+
+# Cloudflare local state
+/.wrangler/

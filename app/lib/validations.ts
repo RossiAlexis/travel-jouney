@@ -100,10 +100,10 @@ export const tripSchemaWithDates = tripSchema.refine(
 );
 
 // ============================================
-// ENTRY SCHEMAS
+// MEMORY SCHEMAS
 // ============================================
 
-export const entrySchema = z.object({
+export const memorySchema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
@@ -125,6 +125,37 @@ export const entrySchema = z.object({
   locationAddress: z.string().max(200).optional(),
   latitude: z.coerce.number().min(-90).max(90).optional(),
   longitude: z.coerce.number().min(-180).max(180).optional(),
+  destinationId: z.string().optional(),
+});
+
+// ============================================
+// DESTINATION SCHEMAS
+// ============================================
+
+export const destinationSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be at most 100 characters"),
+  description: z
+    .string()
+    .max(500, "Description must be at most 500 characters")
+    .optional(),
+  startDate: z
+    .string()
+    .optional()
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
+      message: "Please enter a valid start date",
+    }),
+  endDate: z
+    .string()
+    .optional()
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
+      message: "Please enter a valid end date",
+    }),
+  locationName: z.string().max(100).optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
 });
 
 // ============================================
@@ -138,7 +169,7 @@ export const expenseSchema = z.object({
     "ACCOMMODATION",
     "FOOD",
     "TRANSPORT",
-    "ACTIVITIES",
+    "ACTIVITY",
     "SHOPPING",
     "OTHER",
   ]),
@@ -149,7 +180,7 @@ export const expenseSchema = z.object({
   date: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Please enter a valid date",
   }),
-  entryId: z.string().optional(),
+  memoryId: z.string().optional(),
 });
 
 // ============================================
@@ -173,6 +204,7 @@ export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type TripFormData = z.infer<typeof tripSchema>;
-export type EntryFormData = z.infer<typeof entrySchema>;
+export type MemoryFormData = z.infer<typeof memorySchema>;
 export type ExpenseFormData = z.infer<typeof expenseSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;
+export type DestinationFormData = z.infer<typeof destinationSchema>;

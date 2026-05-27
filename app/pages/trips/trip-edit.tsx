@@ -24,7 +24,6 @@ import {
 } from "~/components/ui/select";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { ArrowLeft, AlertCircle } from "lucide-react";
-import { z } from "zod";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.trip) {
@@ -39,53 +38,21 @@ export function meta({ data }: Route.MetaArgs) {
   ];
 }
 
-const tripLoaderSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string().nullable(),
-  startDate: z.date(),
-  endDate: z.date().nullable(),
-  status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]),
-  budget: z.number().nullable(),
-  currency: z.string(),
-});
-
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const user = await requireAuth(context.db, request);
+  const user = await requireAuth(context.repos, request);
   const { tripId } = params;
 
-  const trip = await context.db.trip.findFirst({
-    where: {
-      id: tripId,
-      userId: user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      startDate: true,
-      endDate: true,
-      status: true,
-      budget: true,
-      currency: true,
-    },
-  });
+  const trip = await context.repos.trips.findByIdForUser(tripId, user.id);
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
-  const parsed = tripLoaderSchema.safeParse(trip);
-  if (!parsed.success) {
-    console.error("Error parsing trip:", parsed.error);
-    throw new Response("Error loading trip data", { status: 500 });
-  }
-
-  return data({ trip: parsed.data });
+  return data({ trip });
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
-  const user = await requireAuth(context.db, request);
+  const user = await requireAuth(context.repos, request);
   const { tripId } = params;
   const formData = await request.formData();
   const submission = parseWithZod(formData, { schema: tripSchemaWithDates });
@@ -98,28 +65,26 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   }
 
   // Verify ownership
-  const existingTrip = await context.db.trip.findFirst({
-    where: { id: tripId, userId: user.id },
-  });
+  const existingTrip = await context.repos.trips.findByIdForUser(
+    tripId,
+    user.id
+  );
 
   if (!existingTrip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
   try {
-    await context.db.trip.update({
-      where: { id: tripId },
-      data: {
-        title: submission.value.title,
-        description: submission.value.description || null,
-        startDate: new Date(submission.value.startDate),
-        endDate: submission.value.endDate
-          ? new Date(submission.value.endDate)
-          : null,
-        status: submission.value.status,
-        budget: submission.value.budget || null,
-        currency: submission.value.currency || "USD",
-      },
+    await context.repos.trips.updateForUser(tripId, user.id, {
+      title: submission.value.title,
+      description: submission.value.description || null,
+      startDate: new Date(submission.value.startDate),
+      endDate: submission.value.endDate
+        ? new Date(submission.value.endDate)
+        : null,
+      status: submission.value.status,
+      budget: submission.value.budget || null,
+      currency: submission.value.currency || "USD",
     });
 
     return redirect(`/trips/${tripId}`);
@@ -200,9 +165,7 @@ export default function TripEdit({
           </Link>
         </Button>
         <h1 className="text-3xl font-bold">Edit Trip</h1>
-        <p className="text-muted-foreground mt-1">
-          Update your trip details
-        </p>
+        <p className="text-muted-foreground mt-1">Update your trip details</p>
       </div>
 
       <Card>
@@ -310,9 +273,7 @@ export default function TripEdit({
                     defaultValue={fields.endDate.initialValue}
                     aria-invalid={!fields.endDate.valid || undefined}
                     aria-describedby={
-                      !fields.endDate.valid
-                        ? fields.endDate.errorId
-                        : undefined
+                      !fields.endDate.valid ? fields.endDate.errorId : undefined
                     }
                   />
                   {fields.endDate.errors && (

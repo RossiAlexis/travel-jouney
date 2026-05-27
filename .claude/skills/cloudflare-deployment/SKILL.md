@@ -98,12 +98,11 @@ export default async function handleRequest(
 
 ### `workers/app.ts`
 
-The Worker entry point. Instantiate PrismaClient per-request (Workers are stateless — no persistent process).
+The Worker entry point. Create repositories per-request from the D1 binding and pass them through `AppLoadContext`.
 
 ```ts
 import { createRequestHandler } from "react-router";
-import { PrismaClient } from "@prisma/client";
-import { PrismaD1 } from "@prisma/adapter-d1";
+import { createRepositories, type Repositories } from "~/lib/repositories";
 
 interface CloudflareEnv {
   DB: D1Database;
@@ -116,7 +115,7 @@ interface CloudflareEnv {
 declare module "react-router" {
   interface AppLoadContext {
     cloudflare: { env: CloudflareEnv; ctx: ExecutionContext };
-    db: PrismaClient;
+    repos: Repositories;
   }
 }
 
@@ -128,46 +127,21 @@ const requestHandler = createRequestHandler(
 export default {
   async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext) {
     if (env.SESSION_SECRET) process.env.SESSION_SECRET = env.SESSION_SECRET;
-    const adapter = new PrismaD1(env.DB);
-    const db = new PrismaClient({ adapter });
-    try {
-      return await requestHandler(request, { cloudflare: { env, ctx }, db });
-    } finally {
-      ctx.waitUntil(db.$disconnect());
-    }
+    const repos = createRepositories(env.DB);
+    return requestHandler(request, { cloudflare: { env, ctx }, repos });
   },
 } satisfies ExportedHandler<CloudflareEnv>;
 ```
 
 ---
 
-## Prisma 7 + D1 rules
+## D1 + SQL migration rules
 
-- **No `url` in `schema.prisma`** — Prisma 7 moved the datasource URL to `prisma.config.ts`
-- **No `previewFeatures = ["driverAdapters"]`** — promoted to stable in Prisma 7, remove it
-- **No `migration_lock.toml` with `postgresql`** — delete it when switching providers so Prisma regenerates it
-- Local dev uses Miniflare's SQLite at `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/*.sqlite`
-- **`wrangler d1 migrations apply` only reads `*.sql` files directly in `migrations_dir`** — not Prisma’s nested folders (`prisma/migrations/<timestamp>/migration.sql`). Keep Wrangler-style copies under e.g. `d1/migrations/0001_initial.sql` and point `migrations_dir` there.
-- **`prisma db seed` does not run on remote D1** — it targets local SQLite only. Use `wrangler d1 execute … --remote --file=…` (or this repo’s `npm run db:seed:remote`) for production seed data. Remote D1 rejects `BEGIN TRANSACTION` in uploaded SQL batches.
-
-```prisma
-// schema.prisma
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "sqlite"
-}
-```
-
-```ts
-// prisma.config.ts
-export default {
-  schema: "./prisma/schema.prisma",
-  datasource: { url: "file:./dev.db" },
-};
-```
+- Keep all schema changes in Wrangler-style SQL files under `d1/migrations/` (`0001_*.sql`, `0002_*.sql`, ...).
+- Use `wrangler d1 migrations apply` (local/remote) as the only migration flow.
+- Use `wrangler d1 execute ... --file=d1/seed.sql` for seed data.
+- Parse D1 rows with Zod in repositories to normalize SQLite booleans/dates.
+- Routes should only consume `context.repos.*`; do not call `context.cloudflare.env.DB` directly from route modules.
 
 ---
 
@@ -240,15 +214,15 @@ export async function verifyPassword(password: string, stored: string): Promise<
 
 ---
 
-## Context pattern — passing `db` to loaders/actions
+## Context pattern — passing repositories to loaders/actions
 
-All loaders and actions receive the Prisma client via `context.db`. Never import a module-level db singleton.
+All loaders and actions receive repositories via `context.repos`. Keep data access inside repository classes.
 
 ```ts
 // In any loader or action:
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const user = await requireAuth(context.db, request);
-  const trips = await context.db.trip.findMany({ where: { userId: user.id } });
+  const user = await requireAuth(context.repos, request);
+  const trips = await context.repos.trips.findManyByUser(user.id);
   return { trips };
 }
 ```
@@ -260,19 +234,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 Always deploy in this exact order — never run `wrangler deploy` directly without building first:
 
 ```bash
-npm run build    # runs prisma generate + react-router build
+npm run build    # runs react-router build
 wrangler deploy  # uploads the built bundle to Cloudflare
-```
-
-The `build` script in `package.json` must always include `prisma generate` before `react-router build`:
-
-```json
-"build": "prisma generate --schema ./prisma/schema.prisma && react-router build"
-```
-
-**Why:** Prisma generates its client files into `node_modules/.prisma/client/` at generate time. If `prisma generate` hasn't run before Vite bundles the Worker, the `.prisma/client/default` module won't exist in the bundle. Cloudflare will reject the deploy with:
-```
-Error: No such module ".prisma/client/default" [code: 10021]
 ```
 
 ---

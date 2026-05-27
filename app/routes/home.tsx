@@ -54,15 +54,21 @@ export default function Home() {
       </main>
 
       {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="mb-12 text-center text-3xl font-bold">
+      <section
+        className="container mx-auto px-4 py-20"
+        aria-labelledby="features-heading"
+      >
+        <h2
+          id="features-heading"
+          className="mb-12 text-center text-3xl font-bold"
+        >
           Everything you need to document your travels
         </h2>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <FeatureCard
             icon={<BookOpen className="text-primary h-10 w-10" />}
-            title="Rich Journal Entries"
-            description="Write detailed entries with photos, locations, and ratings for each experience."
+            title="Rich Travel Memories"
+            description="Write detailed memories with photos, locations, and ratings for each experience."
           />
           <FeatureCard
             icon={<MapPin className="text-primary h-10 w-10" />}
@@ -83,9 +89,12 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary text-primary-foreground py-20">
+      <section
+        className="bg-primary text-primary-foreground py-20"
+        aria-labelledby="cta-heading"
+      >
         <div className="container mx-auto px-4 text-center">
-          <h2 className="mb-6 text-3xl font-bold">
+          <h2 id="cta-heading" className="mb-6 text-3xl font-bold">
             Start documenting your journey today
           </h2>
           <p className="mx-auto mb-8 max-w-xl text-lg opacity-90">

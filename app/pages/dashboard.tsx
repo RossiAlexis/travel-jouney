@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Plus, MapPin, Calendar, BookOpen } from "lucide-react";
 import type { TripStatus } from "~/types";
-import z from "zod";
+
 export function meta() {
   return [
     { title: "Dashboard - Travel Journal" },
@@ -14,57 +14,10 @@ export function meta() {
   ];
 }
 
-const tripsSchema = z
-  .array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-      description: z.string(),
-      coverImage: z.string().nullable(),
-      startDate: z.date(),
-      endDate: z.date().optional(),
-      status: z.enum(["PLANNED", "ONGOING", "COMPLETED"]),
-      _count: z.object({
-        entries: z.number(),
-      }),
-    })
-  )
-  .transform((data) => {
-    return data.map((trip) => {
-      return {
-        id: trip.id,
-        title: trip.title,
-        description: trip.description,
-        coverImage: trip.coverImage,
-        startDate: trip.startDate,
-        endDate: trip.endDate,
-        status: trip.status,
-        entries: trip._count.entries,
-      };
-    });
-  });
-
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const user = await requireAuth(context.db, request);
-  const unparsedTrips = await context.db.trip.findMany({
-    where: { userId: user.id },
-    orderBy: [{ status: "asc" }, { startDate: "desc" }],
-    include: {
-      _count: {
-        select: {
-          entries: true,
-        },
-      },
-    },
-  });
-
-  const trips = tripsSchema.safeParse(unparsedTrips);
-  if (!trips.success) {
-    console.error("Error parsing trips", trips.error);
-    throw new Error("Error parsing trips");
-  }
-
-  return data({ user, trips: trips.data });
+  const user = await requireAuth(context.repos, request);
+  const trips = await context.repos.trips.findManyByUser(user.id);
+  return data({ user, trips });
 }
 
 const statusColors: Record<TripStatus, string> = {
@@ -173,9 +126,9 @@ interface TripCardProps {
     description: string | null;
     coverImage: string | null;
     startDate: Date | string;
-    endDate: Date | string | undefined;
+    endDate: Date | string | null;
     status: TripStatus;
-    entries: number;
+    memoriesCount: number;
   };
 }
 
@@ -236,7 +189,8 @@ function TripCard({ trip }: TripCardProps) {
             <div className="flex items-center gap-1">
               <BookOpen className="h-4 w-4" />
               <span>
-                {trip.entries} entry{trip.entries === 1 ? "" : "s"}
+                {trip.memoriesCount}{" "}
+                {trip.memoriesCount === 1 ? "memory" : "memories"}
               </span>
             </div>
           </div>

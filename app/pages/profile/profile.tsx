@@ -15,20 +15,10 @@ export function meta() {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const user = await requireAuth(context.db, request);
+  const user = await requireAuth(context.repos, request);
 
   // Get user stats
-  const stats = await context.db.user.findUnique({
-    where: { id: user.id },
-    include: {
-      _count: {
-        select: {
-          trips: true,
-          entries: true,
-        },
-      },
-    },
-  });
+  const stats = await context.repos.users.getStats(user.id);
 
   return data({ user, stats });
 }
@@ -45,6 +35,7 @@ export default function Profile() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      <h1 className="sr-only">Profile</h1>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Profile</CardTitle>
@@ -76,13 +67,13 @@ export default function Profile() {
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div className="rounded-lg border p-4 text-center">
               <MapPin className="text-primary mx-auto mb-2 h-6 w-6" />
-              <p className="text-2xl font-bold">{stats?._count.trips ?? 0}</p>
+              <p className="text-2xl font-bold">{stats?.tripsCount ?? 0}</p>
               <p className="text-muted-foreground text-sm">Trips</p>
             </div>
             <div className="rounded-lg border p-4 text-center">
               <BookOpen className="text-primary mx-auto mb-2 h-6 w-6" />
-              <p className="text-2xl font-bold">{stats?._count.entries ?? 0}</p>
-              <p className="text-muted-foreground text-sm">Entries</p>
+              <p className="text-2xl font-bold">{stats?.memoriesCount ?? 0}</p>
+              <p className="text-muted-foreground text-sm">Memories</p>
             </div>
             <div className="col-span-2 rounded-lg border p-4 text-center sm:col-span-1">
               <Calendar className="text-primary mx-auto mb-2 h-6 w-6" />

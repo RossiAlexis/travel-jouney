@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import type { Route } from "./+types/google-callback";
 import { createUserSession } from "~/lib/auth.server";
-import type { PrismaClient } from "@prisma/client";
+import type { Repositories } from "~/lib/repositories";
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -21,11 +21,12 @@ interface GoogleUserInfo {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db } = context;
+  const { repos } = context;
 
   // Google OAuth configuration - read from context env in Workers
   const GOOGLE_CLIENT_ID = context.cloudflare.env.GOOGLE_CLIENT_ID || "";
-  const GOOGLE_CLIENT_SECRET = context.cloudflare.env.GOOGLE_CLIENT_SECRET || "";
+  const GOOGLE_CLIENT_SECRET =
+    context.cloudflare.env.GOOGLE_CLIENT_SECRET || "";
   const GOOGLE_REDIRECT_URI =
     context.cloudflare.env.GOOGLE_REDIRECT_URI ||
     "http://localhost:8787/auth/google/callback";
@@ -85,60 +86,48 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const googleUser: GoogleUserInfo = await userInfoResponse.json();
 
     // Check if account exists
-    const existingAccount = await db.account.findUnique({
-      where: {
-        provider_providerAccountId: {
-          provider: "google",
-          providerAccountId: googleUser.id,
-        },
-      },
-      include: { user: true },
-    });
+    const existingAccount = await repos.accounts.findByProvider(
+      "google",
+      googleUser.id
+    );
 
     if (existingAccount) {
       // User exists, create session
-      return createUserSession(db, existingAccount.user.id, "/dashboard");
+      return createUserSession(repos, existingAccount.user.id, "/dashboard");
     }
 
     // Check if user with this email exists (to link accounts)
-    const existingUser = await db.user.findUnique({
-      where: { email: googleUser.email },
-    });
+    const existingUser = await repos.users.findByEmail(googleUser.email);
 
     if (existingUser) {
       // Link Google account to existing user
-      await db.account.create({
-        data: {
-          userId: existingUser.id,
-          provider: "google",
-          providerAccountId: googleUser.id,
-        },
+      await repos.accounts.create({
+        userId: existingUser.id,
+        provider: "google",
+        providerAccountId: googleUser.id,
       });
-      return createUserSession(db, existingUser.id, "/dashboard");
+      return createUserSession(repos, existingUser.id, "/dashboard");
     }
 
     // Create new user with Google account
     const username = await generateUsername(
-      db,
+      repos,
       googleUser.email,
       googleUser.given_name
     );
-    const user = await db.user.create({
-      data: {
-        email: googleUser.email,
-        username,
-        displayName: googleUser.name,
-        avatar: googleUser.picture,
-        accounts: {
-          create: {
-            provider: "google",
-            providerAccountId: googleUser.id,
-          },
-        },
-      },
+    const user = await repos.users.create({
+      email: googleUser.email,
+      username,
+      displayName: googleUser.name,
+      avatar: googleUser.picture,
+    });
+    await repos.accounts.create({
+      userId: user.id,
+      provider: "google",
+      providerAccountId: googleUser.id,
     });
 
-    return createUserSession(db, user.id, "/dashboard");
+    return createUserSession(repos, user.id, "/dashboard");
   } catch (error) {
     console.error("Google OAuth error:", error);
     throw redirect("/login?error=oauth_failed");
@@ -149,7 +138,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
  * Generate a unique username from email or name
  */
 async function generateUsername(
-  db: PrismaClient,
+  repos: Pick<Repositories, "users">,
   email: string,
   name: string
 ): Promise<string> {
@@ -172,7 +161,7 @@ async function generateUsername(
   let username = baseUsername;
   let counter = 1;
 
-  while (await db.user.findUnique({ where: { username } })) {
+  while (await repos.users.findByUsername(username)) {
     username = `${baseUsername}${counter}`;
     counter++;
   }

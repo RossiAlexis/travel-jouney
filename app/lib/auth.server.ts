@@ -1,5 +1,6 @@
 import { getSession, commitSession, destroySession } from "./session.server";
-import type { PrismaClient } from "../generated/prisma";
+import { err, ok, type Result } from "~/lib/result";
+import type { Repositories } from "~/lib/repositories";
 import type { SessionUser } from "~/types";
 
 const ITERATIONS = 100_000;
@@ -51,8 +52,17 @@ export async function verifyPassword(
     keyMaterial,
     KEY_LENGTH * 8
   );
-  const hashB64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
-  return hashB64 === storedHashB64;
+  const storedBuffer = Uint8Array.from(atob(storedHashB64), (c) =>
+    c.charCodeAt(0)
+  );
+  // timingSafeEqual is a Cloudflare Workers extension on SubtleCrypto
+  const subtle = crypto.subtle as unknown as {
+    timingSafeEqual(
+      a: ArrayBuffer | ArrayBufferView,
+      b: ArrayBuffer | ArrayBufferView
+    ): boolean;
+  };
+  return subtle.timingSafeEqual(hashBuffer, storedBuffer);
 }
 
 /**
@@ -60,7 +70,7 @@ export async function verifyPassword(
  * Returns null if not authenticated
  */
 export async function getUser(
-  db: PrismaClient,
+  repos: Pick<Repositories, "users">,
   request: Request
 ): Promise<SessionUser | null> {
   const session = await getSession(request.headers.get("Cookie"));
@@ -70,18 +80,7 @@ export async function getUser(
     return null;
   }
 
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatar: true,
-    },
-  });
-
-  return user;
+  return repos.users.findSessionUserById(userId);
 }
 
 /**
@@ -89,10 +88,10 @@ export async function getUser(
  * Use this in loaders for protected routes
  */
 export async function requireAuth(
-  db: PrismaClient,
+  repos: Pick<Repositories, "users">,
   request: Request
 ): Promise<SessionUser> {
-  const user = await getUser(db, request);
+  const user = await getUser(repos, request);
 
   if (!user) {
     throw new Response(null, {
@@ -110,7 +109,7 @@ export async function requireAuth(
  * Create a session for a user after login
  */
 export async function createUserSession(
-  db: PrismaClient,
+  repos: Pick<Repositories, "sessions">,
   userId: string,
   redirectTo: string
 ): Promise<Response> {
@@ -118,12 +117,7 @@ export async function createUserSession(
   session.set("userId", userId);
 
   const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000);
-  await db.session.create({
-    data: {
-      userId,
-      expiresAt,
-    },
-  });
+  await repos.sessions.create({ userId, expiresAt });
 
   return new Response(null, {
     status: 302,
@@ -138,16 +132,14 @@ export async function createUserSession(
  * Log out - destroy session and redirect
  */
 export async function logout(
-  db: PrismaClient,
+  repos: Pick<Repositories, "sessions">,
   request: Request
 ): Promise<Response> {
   const session = await getSession(request.headers.get("Cookie"));
   const userId = session.get("userId");
 
   if (userId) {
-    await db.session.deleteMany({
-      where: { userId },
-    });
+    await repos.sessions.deleteByUserId(userId);
   }
 
   return new Response(null, {
@@ -163,90 +155,77 @@ export async function logout(
  * Register a new user with email and password
  */
 export async function registerUser(
-  db: PrismaClient,
+  repos: Pick<Repositories, "users" | "accounts">,
   data: {
     email: string;
     username: string;
     displayName: string;
     password: string;
   }
-): Promise<{ user: SessionUser } | { error: string }> {
-  const existingEmail = await db.user.findUnique({
-    where: { email: data.email },
-  });
+): Promise<Result<SessionUser>> {
+  const existingEmail = await repos.users.findByEmail(data.email);
 
   if (existingEmail) {
-    return { error: "An account with this email already exists" };
+    return err("An account with this email already exists");
   }
 
-  const existingUsername = await db.user.findUnique({
-    where: { username: data.username },
-  });
+  const existingUsername = await repos.users.findByUsername(data.username);
 
   if (existingUsername) {
-    return { error: "This username is already taken" };
+    return err("This username is already taken");
   }
 
   const passwordHash = await hashPassword(data.password);
 
-  const user = await db.user.create({
-    data: {
-      email: data.email,
-      username: data.username,
-      displayName: data.displayName,
-      passwordHash,
-      accounts: {
-        create: {
-          provider: "credentials",
-          providerAccountId: data.email,
-        },
-      },
-    },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatar: true,
-    },
+  const user = await repos.users.create({
+    email: data.email,
+    username: data.username,
+    displayName: data.displayName,
+    passwordHash,
   });
 
-  return { user };
+  await repos.accounts.create({
+    userId: user.id,
+    provider: "credentials",
+    providerAccountId: data.email,
+  });
+
+  return ok({
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    avatar: user.avatar,
+  });
 }
 
 /**
  * Login with email and password
  */
 export async function loginWithPassword(
-  db: PrismaClient,
+  repos: Pick<Repositories, "users">,
   data: {
     email: string;
     password: string;
   }
-): Promise<{ user: SessionUser } | { error: string }> {
-  const user = await db.user.findUnique({
-    where: { email: data.email },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      displayName: true,
-      avatar: true,
-      passwordHash: true,
-    },
-  });
+): Promise<Result<SessionUser>> {
+  const user = await repos.users.findByEmail(data.email);
 
   if (!user || !user.passwordHash) {
-    return { error: "Invalid email or password" };
+    return err("Invalid email or password");
   }
 
   const isValid = await verifyPassword(data.password, user.passwordHash);
 
   if (!isValid) {
-    return { error: "Invalid email or password" };
+    return err("Invalid email or password");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash, ...userWithoutPassword } = user;
-  return { user: userWithoutPassword };
+  return ok({
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    avatar: user.avatar,
+  });
 }
