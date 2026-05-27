@@ -22,4 +22,6 @@ export const destinationWithMemoryCountSchema = destinationSchema.extend({
 });
 
 export type Destination = z.infer<typeof destinationSchema>;
-export type DestinationWithMemoryCount = z.infer<typeof destinationWithMemoryCountSchema>;
+export type DestinationWithMemoryCount = z.infer<
+  typeof destinationWithMemoryCountSchema
+>;

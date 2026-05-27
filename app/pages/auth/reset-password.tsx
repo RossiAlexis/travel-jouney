@@ -13,7 +13,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { MapPin, AlertCircle } from "lucide-react";
@@ -88,7 +87,11 @@ export default function ResetPassword() {
     <main className="from-background to-muted flex min-h-screen items-center justify-center bg-gradient-to-b px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <Link to="/" className="mb-4 flex justify-center" aria-label="Go to home">
+          <Link
+            to="/"
+            className="mb-4 flex justify-center"
+            aria-label="Go to home"
+          >
             <MapPin className="text-primary h-10 w-10" />
           </Link>
           <h1 className="text-2xl font-medium">Reset password</h1>

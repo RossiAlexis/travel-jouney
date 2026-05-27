@@ -25,7 +25,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   // Google OAuth configuration - read from context env in Workers
   const GOOGLE_CLIENT_ID = context.cloudflare.env.GOOGLE_CLIENT_ID || "";
-  const GOOGLE_CLIENT_SECRET = context.cloudflare.env.GOOGLE_CLIENT_SECRET || "";
+  const GOOGLE_CLIENT_SECRET =
+    context.cloudflare.env.GOOGLE_CLIENT_SECRET || "";
   const GOOGLE_REDIRECT_URI =
     context.cloudflare.env.GOOGLE_REDIRECT_URI ||
     "http://localhost:8787/auth/google/callback";

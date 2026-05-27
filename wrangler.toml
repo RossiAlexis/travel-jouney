@@ -10,6 +10,10 @@ database_id = "4cdc38b4-94f7-4d05-a536-ee4618ed6f00"
 # Wrangler only reads *.sql files in this folder (not Prisma's nested migration folders).
 migrations_dir = "d1/migrations"
 
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "travel-journal-photos"
+
 [vars]
 NODE_ENV = "production"
 

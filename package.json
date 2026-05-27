@@ -6,6 +6,7 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "preview": "wrangler dev",
+    "check": "npm run typecheck && npm run lint && npm run test:unit && npm run test:e2e",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",

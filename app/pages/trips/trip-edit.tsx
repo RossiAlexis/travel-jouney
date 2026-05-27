@@ -65,7 +65,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   }
 
   // Verify ownership
-  const existingTrip = await context.repos.trips.findByIdForUser(tripId, user.id);
+  const existingTrip = await context.repos.trips.findByIdForUser(
+    tripId,
+    user.id
+  );
 
   if (!existingTrip) {
     throw new Response("Trip not found", { status: 404 });
@@ -162,9 +165,7 @@ export default function TripEdit({
           </Link>
         </Button>
         <h1 className="text-3xl font-bold">Edit Trip</h1>
-        <p className="text-muted-foreground mt-1">
-          Update your trip details
-        </p>
+        <p className="text-muted-foreground mt-1">Update your trip details</p>
       </div>
 
       <Card>
@@ -272,9 +273,7 @@ export default function TripEdit({
                     defaultValue={fields.endDate.initialValue}
                     aria-invalid={!fields.endDate.valid || undefined}
                     aria-describedby={
-                      !fields.endDate.valid
-                        ? fields.endDate.errorId
-                        : undefined
+                      !fields.endDate.valid ? fields.endDate.errorId : undefined
                     }
                   />
                   {fields.endDate.errors && (

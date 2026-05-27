@@ -58,7 +58,10 @@ export default function Home() {
         className="container mx-auto px-4 py-20"
         aria-labelledby="features-heading"
       >
-        <h2 id="features-heading" className="mb-12 text-center text-3xl font-bold">
+        <h2
+          id="features-heading"
+          className="mb-12 text-center text-3xl font-bold"
+        >
           Everything you need to document your travels
         </h2>
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">

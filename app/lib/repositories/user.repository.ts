@@ -40,7 +40,7 @@ export class UserRepository {
     const row = await this.db
       .prepare(
         `SELECT "id", "email", "username", "displayName", "avatar"
-         FROM "User" WHERE "id" = ?1`,
+         FROM "User" WHERE "id" = ?1`
       )
       .bind(id)
       .first();
@@ -70,7 +70,7 @@ export class UserRepository {
       .prepare(
         `INSERT INTO "User"
           ("id", "email", "passwordHash", "username", "displayName", "avatar", "bio", "createdAt", "updatedAt")
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`,
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)`
       )
       .bind(
         id,
@@ -81,7 +81,7 @@ export class UserRepository {
         input.avatar ?? null,
         input.bio ?? null,
         now,
-        now,
+        now
       )
       .run();
 
@@ -108,9 +108,15 @@ export class UserRepository {
       .prepare(
         `UPDATE "User"
          SET "displayName" = ?2, "avatar" = ?3, "bio" = ?4, "updatedAt" = ?5
-         WHERE "id" = ?1`,
+         WHERE "id" = ?1`
       )
-      .bind(id, updated.displayName, updated.avatar, updated.bio, updated.updatedAt)
+      .bind(
+        id,
+        updated.displayName,
+        updated.avatar,
+        updated.bio,
+        updated.updatedAt
+      )
       .run();
 
     return this.findById(id);
@@ -128,7 +134,7 @@ export class UserRepository {
         LEFT JOIN "Trip" t ON t."userId" = u."id"
         LEFT JOIN "Memory" m ON m."userId" = u."id"
         WHERE u."id" = ?1
-        GROUP BY u."id", u."createdAt"`,
+        GROUP BY u."id", u."createdAt"`
       )
       .bind(userId)
       .first();

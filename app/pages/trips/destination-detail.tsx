@@ -12,26 +12,11 @@ import {
   Plus,
   BookOpen,
 } from "lucide-react";
-import type { MemoryCategory } from "~/types";
 import type { MemoryWithPhotos } from "~/lib/schemas";
+import { MEMORY_CATEGORY_ICONS, MEMORY_CATEGORY_LABELS } from "~/lib/constants";
 
-const categoryIcons: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "🏨",
-  FOOD: "🍽️",
-  ACTIVITY: "🎯",
-  TRANSPORT: "🚗",
-  REFLECTION: "💭",
-  OTHER: "📝",
-};
-
-const categoryLabels: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "Accommodation",
-  FOOD: "Food & Dining",
-  ACTIVITY: "Activity",
-  TRANSPORT: "Transport",
-  REFLECTION: "Reflection",
-  OTHER: "Other",
-};
+const categoryIcons = MEMORY_CATEGORY_ICONS;
+const categoryLabels = MEMORY_CATEGORY_LABELS;
 
 export function meta({ data: loaderData }: Route.MetaArgs) {
   if (!loaderData?.destination) {
@@ -59,7 +44,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const destination = await context.repos.destinations.findByIdForTrip(
     destinationId,
-    tripId,
+    tripId
   );
   if (!destination) {
     throw new Response("Destination not found", { status: 404 });
@@ -67,7 +52,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const memories = await context.repos.memories.findByDestinationWithPhotos(
     destinationId,
-    3,
+    3
   );
 
   return data({ trip, destination, memories });
@@ -193,9 +178,7 @@ export default function DestinationDetail({
                   {memory.photos.length > 0 ? (
                     <div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
                       <img
-                        src={
-                          memory.photos[0].thumbnail || memory.photos[0].url
-                        }
+                        src={memory.photos[0].thumbnail || memory.photos[0].url}
                         alt=""
                         className="h-full w-full object-cover"
                       />

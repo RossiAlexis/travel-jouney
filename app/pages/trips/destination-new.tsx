@@ -18,7 +18,7 @@ import {
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 
-export function meta({ params }: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Add Destination - Travel Journal" },
     { name: "description", content: "Add a destination to your trip" },
@@ -58,7 +58,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (submission.status !== "success") {
     return data(
       { submission: submission.reply(), error: null },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -81,7 +81,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         submission: submission.reply(),
         error: "Failed to create destination. Please try again.",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -154,7 +154,10 @@ export default function DestinationNew({
                   }
                 />
                 {fields.name.errors && (
-                  <p id={fields.name.errorId} className="text-destructive text-sm">
+                  <p
+                    id={fields.name.errorId}
+                    className="text-destructive text-sm"
+                  >
                     {fields.name.errors}
                   </p>
                 )}

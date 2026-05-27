@@ -24,9 +24,15 @@ export class AccountRepository {
       .prepare(
         `INSERT INTO "Account"
           ("id", "userId", "provider", "providerAccountId", "createdAt")
-         VALUES (?1, ?2, ?3, ?4, ?5)`,
+         VALUES (?1, ?2, ?3, ?4, ?5)`
       )
-      .bind(id, input.userId, input.provider, input.providerAccountId, createdAt)
+      .bind(
+        id,
+        input.userId,
+        input.provider,
+        input.providerAccountId,
+        createdAt
+      )
       .run();
 
     const row = await this.db
@@ -43,7 +49,7 @@ export class AccountRepository {
 
   async findByProvider(
     provider: string,
-    providerAccountId: string,
+    providerAccountId: string
   ): Promise<AccountWithUser | null> {
     const row = await this.db
       .prepare(
@@ -64,7 +70,7 @@ export class AccountRepository {
           u."updatedAt" AS user_updatedAt
         FROM "Account" a
         JOIN "User" u ON u."id" = a."userId"
-        WHERE a."provider" = ?1 AND a."providerAccountId" = ?2`,
+        WHERE a."provider" = ?1 AND a."providerAccountId" = ?2`
       )
       .bind(provider, providerAccountId)
       .first();

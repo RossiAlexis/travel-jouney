@@ -15,7 +15,7 @@ export const expenseCategorySchema = z.enum([
   "ACCOMMODATION",
   "FOOD",
   "TRANSPORT",
-  "ACTIVITIES",
+  "ACTIVITY",
   "SHOPPING",
   "OTHER",
 ]);

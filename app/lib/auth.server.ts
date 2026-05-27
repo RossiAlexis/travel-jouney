@@ -52,8 +52,17 @@ export async function verifyPassword(
     keyMaterial,
     KEY_LENGTH * 8
   );
-  const hashB64 = btoa(String.fromCharCode(...new Uint8Array(hashBuffer)));
-  return hashB64 === storedHashB64;
+  const storedBuffer = Uint8Array.from(atob(storedHashB64), (c) =>
+    c.charCodeAt(0)
+  );
+  // timingSafeEqual is a Cloudflare Workers extension on SubtleCrypto
+  const subtle = crypto.subtle as unknown as {
+    timingSafeEqual(
+      a: ArrayBuffer | ArrayBufferView,
+      b: ArrayBuffer | ArrayBufferView
+    ): boolean;
+  };
+  return subtle.timingSafeEqual(hashBuffer, storedBuffer);
 }
 
 /**

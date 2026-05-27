@@ -42,7 +42,7 @@ export const memoryWithPhotosSchema = memorySchema.extend({
       id: true,
       url: true,
       thumbnail: true,
-    }),
+    })
   ),
 });
 

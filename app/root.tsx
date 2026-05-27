@@ -23,7 +23,6 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-// eslint-disable-next-line no-undef
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">

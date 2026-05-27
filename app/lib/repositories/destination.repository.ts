@@ -42,7 +42,7 @@ export class DestinationRepository {
         LEFT JOIN "Memory" m ON m."destinationId" = d."id"
         WHERE d."tripId" = ?1
         GROUP BY d."id"
-        ORDER BY d."order" ASC, d."createdAt" ASC`,
+        ORDER BY d."order" ASC, d."createdAt" ASC`
       )
       .bind(tripId)
       .all();
@@ -51,15 +51,16 @@ export class DestinationRepository {
       destinationWithMemoryCountSchema.parse({
         ...row,
         memoriesCount: Number(row.memoriesCount ?? 0),
-      }),
+      })
     );
   }
 
-  async findByIdForTrip(id: string, tripId: string): Promise<Destination | null> {
+  async findByIdForTrip(
+    id: string,
+    tripId: string
+  ): Promise<Destination | null> {
     const row = await this.db
-      .prepare(
-        `SELECT * FROM "Destination" WHERE "id" = ?1 AND "tripId" = ?2`,
-      )
+      .prepare(`SELECT * FROM "Destination" WHERE "id" = ?1 AND "tripId" = ?2`)
       .bind(id, tripId)
       .first();
 
@@ -73,7 +74,7 @@ export class DestinationRepository {
     // Determine order: place after the last destination
     const maxOrderRow = await this.db
       .prepare(
-        `SELECT COALESCE(MAX("order"), -1) AS maxOrder FROM "Destination" WHERE "tripId" = ?1`,
+        `SELECT COALESCE(MAX("order"), -1) AS maxOrder FROM "Destination" WHERE "tripId" = ?1`
       )
       .bind(input.tripId)
       .first();
@@ -87,7 +88,7 @@ export class DestinationRepository {
       .prepare(
         `INSERT INTO "Destination"
           ("id", "tripId", "name", "description", "startDate", "endDate", "order", "latitude", "longitude", "placeId", "updatedAt")
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`,
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`
       )
       .bind(
         id,
@@ -100,7 +101,7 @@ export class DestinationRepository {
         input.latitude ?? null,
         input.longitude ?? null,
         input.placeId ?? null,
-        now,
+        now
       )
       .run();
 
@@ -114,7 +115,7 @@ export class DestinationRepository {
   async update(
     id: string,
     tripId: string,
-    input: UpdateDestinationInput,
+    input: UpdateDestinationInput
   ): Promise<boolean> {
     const result = await this.db
       .prepare(
@@ -128,7 +129,7 @@ export class DestinationRepository {
           "longitude" = ?8,
           "placeId" = ?9,
           "updatedAt" = ?10
-         WHERE "id" = ?1 AND "tripId" = ?2`,
+         WHERE "id" = ?1 AND "tripId" = ?2`
       )
       .bind(
         id,
@@ -140,7 +141,7 @@ export class DestinationRepository {
         input.latitude ?? null,
         input.longitude ?? null,
         input.placeId ?? null,
-        new Date().toISOString(),
+        new Date().toISOString()
       )
       .run();
 
@@ -149,9 +150,7 @@ export class DestinationRepository {
 
   async delete(id: string, tripId: string): Promise<boolean> {
     const result = await this.db
-      .prepare(
-        `DELETE FROM "Destination" WHERE "id" = ?1 AND "tripId" = ?2`,
-      )
+      .prepare(`DELETE FROM "Destination" WHERE "id" = ?1 AND "tripId" = ?2`)
       .bind(id, tripId)
       .run();
 
@@ -167,9 +166,9 @@ export class DestinationRepository {
     const stmts = orderedIds.map((id, index) =>
       this.db
         .prepare(
-          `UPDATE "Destination" SET "order" = ?1, "updatedAt" = ?2 WHERE "id" = ?3 AND "tripId" = ?4`,
+          `UPDATE "Destination" SET "order" = ?1, "updatedAt" = ?2 WHERE "id" = ?3 AND "tripId" = ?4`
         )
-        .bind(index, now, id, tripId),
+        .bind(index, now, id, tripId)
     );
 
     if (stmts.length > 0) {

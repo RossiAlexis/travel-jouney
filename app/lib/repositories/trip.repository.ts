@@ -51,7 +51,7 @@ export class TripRepository {
             WHEN 'COMPLETED' THEN 3
             ELSE 4
           END ASC,
-          t."startDate" DESC`,
+          t."startDate" DESC`
       )
       .bind(userId)
       .all();
@@ -60,7 +60,7 @@ export class TripRepository {
       dashboardTripSchema.parse({
         ...row,
         memoriesCount: Number(row.memoriesCount ?? 0),
-      }),
+      })
     );
   }
 
@@ -74,7 +74,7 @@ export class TripRepository {
 
   async findByIdWithCountsForUser(
     tripId: string,
-    userId: string,
+    userId: string
   ): Promise<TripWithCounts | null> {
     const row = await this.db
       .prepare(
@@ -86,7 +86,7 @@ export class TripRepository {
         LEFT JOIN "Memory" m ON m."tripId" = t."id"
         LEFT JOIN "Expense" ex ON ex."tripId" = t."id"
         WHERE t."id" = ?1 AND t."userId" = ?2
-        GROUP BY t."id"`,
+        GROUP BY t."id"`
       )
       .bind(tripId, userId)
       .first();
@@ -106,7 +106,7 @@ export class TripRepository {
       .prepare(
         `INSERT INTO "Trip"
           ("id", "userId", "title", "description", "startDate", "endDate", "status", "budget", "currency", "updatedAt")
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`
       )
       .bind(
         id,
@@ -118,7 +118,7 @@ export class TripRepository {
         input.status,
         input.budget ?? null,
         input.currency,
-        now,
+        now
       )
       .run();
 
@@ -132,7 +132,7 @@ export class TripRepository {
   async updateForUser(
     tripId: string,
     userId: string,
-    input: UpdateTripInput,
+    input: UpdateTripInput
   ): Promise<boolean> {
     const result = await this.db
       .prepare(
@@ -146,7 +146,7 @@ export class TripRepository {
           "budget" = ?8,
           "currency" = ?9,
           "updatedAt" = ?10
-         WHERE "id" = ?1 AND "userId" = ?2`,
+         WHERE "id" = ?1 AND "userId" = ?2`
       )
       .bind(
         tripId,
@@ -158,7 +158,7 @@ export class TripRepository {
         input.status,
         input.budget ?? null,
         input.currency,
-        new Date().toISOString(),
+        new Date().toISOString()
       )
       .run();
 

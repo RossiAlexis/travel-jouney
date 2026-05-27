@@ -17,7 +17,7 @@ export class SessionRepository {
     await this.db
       .prepare(
         `INSERT INTO "Session" ("id", "userId", "expiresAt", "createdAt")
-         VALUES (?1, ?2, ?3, ?4)`,
+         VALUES (?1, ?2, ?3, ?4)`
       )
       .bind(id, input.userId, input.expiresAt.toISOString(), createdAt)
       .run();

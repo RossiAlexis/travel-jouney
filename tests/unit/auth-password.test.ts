@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { hashPassword, verifyPassword } from "~/lib/auth.server";
 
 describe("password hashing", () => {

@@ -76,15 +76,28 @@ test.describe("Travel Journal screens", () => {
       /Add Memory/i
     );
 
-    await page.goto(`/trips/${tripId}/memories/sample-memory`);
-    await expect(page.getByText(/Memory detail view will be implemented/i)).toBeVisible();
+    // Submit the memory-new form and follow the redirect to the real detail page
+    await page.getByLabel(/^Title/).fill(`E2E Memory ${id}`);
+    await page.getByLabel(/^Memory/).fill("This is a test memory content.");
+    // Date field already has today pre-filled; leave it
+    await page.getByRole("button", { name: /^Save Memory$/i }).click();
+
+    // React Router redirects to /trips/:tripId/memories/:memoryId
+    await expect(page).toHaveURL(/\/trips\/[^/]+\/memories\/[^/]+$/);
+    const memoryId = page.url().split("/").at(-1);
+    expect(memoryId).toBeTruthy();
+
+    // Memory detail page — verify title is visible and a11y passes
+    await expect(page.getByText(`E2E Memory ${id}`).first()).toBeVisible();
     await expectNoA11yViolations(page);
 
-    await assertPageAndA11y(
-      page,
-      `/trips/${tripId}/memories/sample-memory/edit`,
-      /Edit Memory/i
-    );
-    await assertPageAndA11y(page, `/trips/${tripId}/expenses`, /Trip Expenses/i);
+    // Memory edit from the detail page
+    await page.getByRole("link", { name: /^Edit$/i }).click();
+    await expect(page).toHaveURL(/\/memories\/[^/]+\/edit$/);
+    await expect(page.getByRole("heading", { name: /Edit Memory/i })).toBeVisible();
+    await expectNoA11yViolations(page);
+
+    // Expenses page (heading is now "Expenses", not "Trip Expenses")
+    await assertPageAndA11y(page, `/trips/${tripId}/expenses`, /^Expenses$/i);
   });
 });

@@ -25,17 +25,11 @@ import {
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { ArrowLeft, AlertCircle, MapPin } from "lucide-react";
+import { MEMORY_CATEGORY_OPTIONS } from "~/lib/constants";
 
-const CATEGORY_OPTIONS = [
-  { value: "ACCOMMODATION", label: "Accommodation" },
-  { value: "FOOD", label: "Food & Dining" },
-  { value: "ACTIVITY", label: "Activity" },
-  { value: "TRANSPORT", label: "Transport" },
-  { value: "REFLECTION", label: "Reflection" },
-  { value: "OTHER", label: "Other" },
-];
+const CATEGORY_OPTIONS = MEMORY_CATEGORY_OPTIONS;
 
-export function meta({ data: loaderData }: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Add Memory - Travel Journal" },
     { name: "description", content: "Add a new memory to your trip" },
@@ -46,7 +40,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const user = await requireAuth(context.repos, request);
   const { tripId } = params;
   // destinationId may come from URL params (destination-scoped route) or query param
-  const destinationIdFromParams = (params as Record<string, string | undefined>).destinationId ?? null;
+  const destinationIdFromParams =
+    (params as Record<string, string | undefined>).destinationId ?? null;
 
   const trip = await context.repos.trips.findByIdForUser(tripId, user.id);
   if (!trip) {
@@ -61,7 +56,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   if (destinationId) {
     destination = await context.repos.destinations.findByIdForTrip(
       destinationId,
-      tripId,
+      tripId
     );
     if (!destination) {
       throw new Response("Destination not found", { status: 404 });
@@ -99,7 +94,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (submission.status !== "success") {
     return data(
       { submission: submission.reply(), error: null },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -108,7 +103,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (destinationId) {
     const destination = await context.repos.destinations.findByIdForTrip(
       destinationId,
-      tripId,
+      tripId
     );
     if (!destination) {
       throw new Response("Destination not found", { status: 404 });
@@ -131,13 +126,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       longitude: submission.value.longitude ?? null,
     });
 
-    if (destinationId) {
-      return redirect(
-        `/trips/${tripId}/destinations/${destinationId}`,
-      );
-    }
-
-    return redirect(`/trips/${tripId}`);
+    return redirect(`/trips/${tripId}/memories/${memory.id}`);
   } catch (error) {
     console.error("Error creating memory:", error);
     return data(
@@ -145,7 +134,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         submission: submission.reply(),
         error: "Failed to create memory. Please try again.",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -249,7 +238,10 @@ export default function MemoryNew({
                   }
                 />
                 {fields.title.errors && (
-                  <p id={fields.title.errorId} className="text-destructive text-sm">
+                  <p
+                    id={fields.title.errorId}
+                    className="text-destructive text-sm"
+                  >
                     {fields.title.errors}
                   </p>
                 )}
@@ -351,7 +343,9 @@ export default function MemoryNew({
                 <Label htmlFor={fields.rating.id}>Rating (optional)</Label>
                 <Select
                   name={fields.rating.name}
-                  defaultValue={fields.rating.initialValue as string | undefined}
+                  defaultValue={
+                    fields.rating.initialValue as string | undefined
+                  }
                 >
                   <SelectTrigger
                     id={fields.rating.id}

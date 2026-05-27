@@ -17,9 +17,29 @@ interface CreateExpenseInput {
 export class ExpenseRepository {
   constructor(private readonly db: D1Database) {}
 
+  async findByTrip(tripId: string): Promise<Expense[]> {
+    const { results } = await this.db
+      .prepare(
+        `SELECT * FROM "Expense" WHERE "tripId" = ?1 ORDER BY "date" DESC`
+      )
+      .bind(tripId)
+      .all();
+    return results.map((row) => expenseSchema.parse(row));
+  }
+
+  async deleteById(id: string, userId: string): Promise<boolean> {
+    const result = await this.db
+      .prepare(`DELETE FROM "Expense" WHERE "id" = ?1 AND "userId" = ?2`)
+      .bind(id, userId)
+      .run();
+    return Boolean(result.success);
+  }
+
   async sumByTrip(tripId: string): Promise<number> {
     const row = await this.db
-      .prepare(`SELECT COALESCE(SUM("amount"), 0) AS total FROM "Expense" WHERE "tripId" = ?1`)
+      .prepare(
+        `SELECT COALESCE(SUM("amount"), 0) AS total FROM "Expense" WHERE "tripId" = ?1`
+      )
       .bind(tripId)
       .first();
 
@@ -33,7 +53,7 @@ export class ExpenseRepository {
       .prepare(
         `INSERT INTO "Expense"
           ("id", "tripId", "userId", "memoryId", "amount", "currency", "category", "description", "date", "createdAt", "updatedAt")
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`,
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`
       )
       .bind(
         id,
@@ -46,7 +66,7 @@ export class ExpenseRepository {
         input.description,
         input.date.toISOString(),
         now,
-        now,
+        now
       )
       .run();
 

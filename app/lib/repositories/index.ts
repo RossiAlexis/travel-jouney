@@ -3,6 +3,7 @@ import { AccountRepository } from "./account.repository";
 import { DestinationRepository } from "./destination.repository";
 import { MemoryRepository } from "./memory.repository";
 import { ExpenseRepository } from "./expense.repository";
+import { PhotoRepository } from "./photo.repository";
 import { SessionRepository } from "./session.repository";
 import { TripRepository } from "./trip.repository";
 import { UserRepository } from "./user.repository";
@@ -15,6 +16,7 @@ export interface Repositories {
   memories: MemoryRepository;
   expenses: ExpenseRepository;
   destinations: DestinationRepository;
+  photos: PhotoRepository;
 }
 
 export function createRepositories(db: D1Database): Repositories {
@@ -26,6 +28,7 @@ export function createRepositories(db: D1Database): Repositories {
     memories: new MemoryRepository(db),
     expenses: new ExpenseRepository(db),
     destinations: new DestinationRepository(db),
+    photos: new PhotoRepository(db),
   };
 }
 
@@ -34,6 +37,7 @@ export {
   DestinationRepository,
   MemoryRepository,
   ExpenseRepository,
+  PhotoRepository,
   SessionRepository,
   TripRepository,
   UserRepository,

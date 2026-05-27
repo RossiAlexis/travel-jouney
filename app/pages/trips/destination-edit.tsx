@@ -1,4 +1,11 @@
-import { Form, Link, useNavigation, useFetcher, data, redirect } from "react-router";
+import {
+  Form,
+  Link,
+  useNavigation,
+  useFetcher,
+  data,
+  redirect,
+} from "react-router";
 import type { Route } from "./+types/destination-edit";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { useForm } from "@conform-to/react";
@@ -51,7 +58,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const destination = await context.repos.destinations.findByIdForTrip(
     destinationId,
-    tripId,
+    tripId
   );
   if (!destination) {
     throw new Response("Destination not found", { status: 404 });
@@ -87,7 +94,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (submission.status !== "success") {
     return data(
       { submission: submission.reply(), error: null },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -109,7 +116,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         submission: submission.reply(),
         error: "Failed to update destination. Please try again.",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -197,7 +204,10 @@ export default function DestinationEdit({
                   }
                 />
                 {fields.name.errors && (
-                  <p id={fields.name.errorId} className="text-destructive text-sm">
+                  <p
+                    id={fields.name.errorId}
+                    className="text-destructive text-sm"
+                  >
                     {fields.name.errors}
                   </p>
                 )}
@@ -264,9 +274,7 @@ export default function DestinationEdit({
                     defaultValue={fields.endDate.initialValue}
                     aria-invalid={!fields.endDate.valid || undefined}
                     aria-describedby={
-                      !fields.endDate.valid
-                        ? fields.endDate.errorId
-                        : undefined
+                      !fields.endDate.valid ? fields.endDate.errorId : undefined
                     }
                   />
                   {fields.endDate.errors && (
@@ -297,7 +305,7 @@ export default function DestinationEdit({
       </Card>
 
       {/* Danger zone */}
-      <Card className="mt-6 border-destructive/50">
+      <Card className="border-destructive/50 mt-6">
         <CardHeader>
           <CardTitle className="text-destructive">Danger Zone</CardTitle>
           <CardDescription>

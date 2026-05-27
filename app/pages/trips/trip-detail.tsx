@@ -30,7 +30,8 @@ import {
   Map,
   Receipt,
 } from "lucide-react";
-import type { TripStatus, MemoryCategory } from "~/types";
+import type { TripStatus } from "~/types";
+import { MEMORY_CATEGORY_ICONS, MEMORY_CATEGORY_LABELS } from "~/lib/constants";
 import type {
   MemoryWithPhotos,
   Photo,
@@ -67,20 +68,20 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
   const trip = await context.repos.trips.findByIdWithCountsForUser(
     tripId,
-    user.id,
+    user.id
   );
 
   if (!trip) {
     throw new Response("Trip not found", { status: 404 });
   }
 
-  const [memories, destinations, tripLevelMemories, totalExpenses] =
-    await Promise.all([
-      context.repos.memories.findByTripWithPhotos(tripId, 3),
-      context.repos.destinations.findByTrip(tripId),
-      context.repos.memories.findTripLevelMemories(tripId),
-      context.repos.expenses.sumByTrip(tripId),
-    ]);
+  const [memories, destinations, totalExpenses] = await Promise.all([
+    context.repos.memories.findByTripWithPhotos(tripId),
+    context.repos.destinations.findByTrip(tripId),
+    context.repos.expenses.sumByTrip(tripId),
+  ]);
+
+  const tripLevelMemories = memories.filter((m) => m.destinationId === null);
 
   return data({
     trip: {
@@ -107,6 +108,13 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       throw new Response("Trip not found", { status: 404 });
     }
 
+    const memories = await context.repos.memories.findByTripWithPhotos(tripId);
+    const photoUrls = memories.flatMap((m) => m.photos.map((p) => p.url));
+    const bucket = context.cloudflare.env.PHOTOS;
+    if (bucket && photoUrls.length > 0) {
+      await Promise.all(photoUrls.map((url) => bucket.delete(url.slice(1))));
+    }
+
     await context.repos.trips.deleteForUser(tripId, user.id);
 
     return redirect("/dashboard");
@@ -127,23 +135,8 @@ const statusLabels: Record<TripStatus, string> = {
   COMPLETED: "Completed",
 };
 
-const categoryIcons: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "🏨",
-  FOOD: "🍽️",
-  ACTIVITY: "🎯",
-  TRANSPORT: "🚗",
-  REFLECTION: "💭",
-  OTHER: "📝",
-};
-
-const categoryLabels: Record<MemoryCategory, string> = {
-  ACCOMMODATION: "Accommodation",
-  FOOD: "Food & Dining",
-  ACTIVITY: "Activity",
-  TRANSPORT: "Transport",
-  REFLECTION: "Reflection",
-  OTHER: "Other",
-};
+const categoryIcons = MEMORY_CATEGORY_ICONS;
+const categoryLabels = MEMORY_CATEGORY_LABELS;
 
 function MemoryCard({
   memory,
@@ -258,7 +251,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
       ...photo,
       memoryId: memory.id,
       memoryTitle: memory.title,
-    })),
+    }))
   );
 
   const hasDestinations = trip.destinations.length > 0;
@@ -284,7 +277,9 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
           </div>
 
           {trip.description && (
-            <p className="text-muted-foreground max-w-2xl">{trip.description}</p>
+            <p className="text-muted-foreground max-w-2xl">
+              {trip.description}
+            </p>
           )}
 
           <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
@@ -406,7 +401,7 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
                 Over budget by{" "}
                 {formatCurrency(
                   trip.totalExpenses - trip.budget,
-                  trip.currency,
+                  trip.currency
                 )}
               </p>
             )}
@@ -474,74 +469,72 @@ export default function TripDetail({ loaderData }: Route.ComponentProps) {
             <div className="space-y-6">
               {/* Destination cards */}
               <div className="space-y-4">
-                {trip.destinations.map(
-                  (dest: DestinationWithMemoryCount) => {
-                    const startLabel = formatDestinationDate(dest.startDate);
-                    const endLabel = formatDestinationDate(dest.endDate);
+                {trip.destinations.map((dest: DestinationWithMemoryCount) => {
+                  const startLabel = formatDestinationDate(dest.startDate);
+                  const endLabel = formatDestinationDate(dest.endDate);
 
-                    return (
-                      <Link
-                        key={dest.id}
-                        to={`/trips/${trip.id}/destinations/${dest.id}`}
-                      >
-                        <Card className="transition-shadow hover:shadow-md">
-                          <CardContent className="py-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="text-muted-foreground h-4 w-4 shrink-0" />
-                                  <h3 className="font-semibold">{dest.name}</h3>
-                                </div>
-                                {dest.description && (
-                                  <p className="text-muted-foreground line-clamp-2 text-sm">
-                                    {dest.description}
-                                  </p>
-                                )}
-                                <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
-                                  {(startLabel || endLabel) && (
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      {startLabel}
-                                      {startLabel && endLabel && " — "}
-                                      {endLabel}
-                                    </span>
-                                  )}
-                                  <span className="flex items-center gap-1">
-                                    <BookOpen className="h-3 w-3" />
-                                    {dest.memoriesCount}{" "}
-                                    {dest.memoriesCount === 1
-                                      ? "memory"
-                                      : "memories"}
-                                  </span>
-                                </div>
+                  return (
+                    <Link
+                      key={dest.id}
+                      to={`/trips/${trip.id}/destinations/${dest.id}`}
+                    >
+                      <Card className="transition-shadow hover:shadow-md">
+                        <CardContent className="py-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <MapPin className="text-muted-foreground h-4 w-4 shrink-0" />
+                                <h3 className="font-semibold">{dest.name}</h3>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="shrink-0"
-                                asChild
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Link
-                                  to={`/trips/${trip.id}/destinations/${dest.id}/memories/new`}
-                                >
-                                  <Plus className="mr-1 h-3 w-3" />
-                                  Add
-                                </Link>
-                              </Button>
+                              {dest.description && (
+                                <p className="text-muted-foreground line-clamp-2 text-sm">
+                                  {dest.description}
+                                </p>
+                              )}
+                              <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
+                                {(startLabel || endLabel) && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    {startLabel}
+                                    {startLabel && endLabel && " — "}
+                                    {endLabel}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1">
+                                  <BookOpen className="h-3 w-3" />
+                                  {dest.memoriesCount}{" "}
+                                  {dest.memoriesCount === 1
+                                    ? "memory"
+                                    : "memories"}
+                                </span>
+                              </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    );
-                  },
-                )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="shrink-0"
+                              asChild
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Link
+                                to={`/trips/${trip.id}/destinations/${dest.id}/memories/new`}
+                              >
+                                <Plus className="mr-1 h-3 w-3" />
+                                Add
+                              </Link>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
 
               {/* General memories (trip-level, no destination) */}
               {trip.tripLevelMemories.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-muted-foreground text-sm font-medium uppercase tracking-wide">
+                  <h3 className="text-muted-foreground text-sm font-medium tracking-wide uppercase">
                     General Memories
                   </h3>
                   {trip.tripLevelMemories.map((memory: MemoryWithPhotos) => (

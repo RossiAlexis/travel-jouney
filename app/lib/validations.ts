@@ -169,7 +169,7 @@ export const expenseSchema = z.object({
     "ACCOMMODATION",
     "FOOD",
     "TRANSPORT",
-    "ACTIVITIES",
+    "ACTIVITY",
     "SHOPPING",
     "OTHER",
   ]),
