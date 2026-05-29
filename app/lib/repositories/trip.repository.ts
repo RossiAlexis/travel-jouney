@@ -9,6 +9,7 @@ import {
   tripWithCountsSchema,
 } from "~/lib/schemas";
 import { createId } from "./id";
+import { generateSlug } from "~/lib/utils";
 
 interface CreateTripInput {
   userId: string;
@@ -29,6 +30,7 @@ interface UpdateTripInput {
   status: TripStatus;
   budget?: number | null;
   currency: string;
+  isPublic?: boolean;
 }
 
 export class TripRepository {
@@ -99,6 +101,21 @@ export class TripRepository {
     });
   }
 
+  async findPublicByUsernameAndSlug(
+    username: string,
+    slug: string
+  ): Promise<Trip | null> {
+    const row = await this.db
+      .prepare(
+        `SELECT t.* FROM "Trip" t
+         JOIN "User" u ON u."id" = t."userId"
+         WHERE u."username" = ?1 AND t."slug" = ?2 AND t."isPublic" = TRUE`
+      )
+      .bind(username, slug)
+      .first();
+    return row ? tripSchema.parse(row) : null;
+  }
+
   async create(input: CreateTripInput): Promise<Trip> {
     const id = createId();
     const now = new Date().toISOString();
@@ -134,6 +151,17 @@ export class TripRepository {
     userId: string,
     input: UpdateTripInput
   ): Promise<boolean> {
+    const existing = await this.findByIdForUser(tripId, userId);
+    if (!existing) return false;
+
+    const isPublic = input.isPublic ?? existing.isPublic;
+
+    // Generate slug on first publication; freeze it afterwards
+    let slug = existing.slug;
+    if (isPublic && !slug) {
+      slug = await this.generateUniqueSlug(userId, input.title);
+    }
+
     const result = await this.db
       .prepare(
         `UPDATE "Trip"
@@ -145,7 +173,9 @@ export class TripRepository {
           "status" = ?7,
           "budget" = ?8,
           "currency" = ?9,
-          "updatedAt" = ?10
+          "isPublic" = ?10,
+          "slug" = ?11,
+          "updatedAt" = ?12
          WHERE "id" = ?1 AND "userId" = ?2`
       )
       .bind(
@@ -158,6 +188,8 @@ export class TripRepository {
         input.status,
         input.budget ?? null,
         input.currency,
+        isPublic ? 1 : 0,
+        slug,
         new Date().toISOString()
       )
       .run();
@@ -172,5 +204,24 @@ export class TripRepository {
       .run();
 
     return Boolean(result.success);
+  }
+
+  private async generateUniqueSlug(
+    userId: string,
+    title: string
+  ): Promise<string> {
+    const base = generateSlug(title) || "trip";
+    let candidate = base;
+    let counter = 2;
+    while (true) {
+      const existing = await this.db
+        .prepare(
+          `SELECT 1 FROM "Trip" WHERE "userId" = ?1 AND "slug" = ?2 LIMIT 1`
+        )
+        .bind(userId, candidate)
+        .first();
+      if (!existing) return candidate;
+      candidate = `${base}-${counter++}`;
+    }
   }
 }

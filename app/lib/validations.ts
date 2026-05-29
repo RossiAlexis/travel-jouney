@@ -86,6 +86,10 @@ export const tripSchema = z.object({
     .string()
     .length(3, "Currency must be a 3-letter code")
     .default("USD"),
+  isPublic: z.preprocess(
+    (val) => val === true || val === "on" || val === "true",
+    z.boolean()
+  ),
 });
 
 export const tripSchemaWithDates = tripSchema.refine(
