@@ -1,87 +1,119 @@
-# Welcome to React Router!
+# 🧳 Travel Journal
 
-A modern, production-ready template for building full-stack React applications using React Router.
+A full-stack travel journaling app for documenting trips through memories, photos, destinations, and expenses — private by default, with selective public sharing via clean, shareable URLs (`/:username/:tripSlug`).
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+Built as a portfolio project to demonstrate production-grade patterns end-to-end: edge-first architecture, type-safe forms, a repository-based data layer, and a real automated test suite (unit + e2e + accessibility) rather than a toy CRUD demo.
+
+## Overview
+
+Users organize their travel into **Trips**, each containing an ordered list of **Destinations** and a timeline of **Memories** (journal entries with category, rating, location, and photos). **Expenses** are tracked per trip and checked against an optional budget. Any trip can be published with one toggle, generating a permanent slug and a public read-only page — the slug is frozen at publish time, so renaming a trip never breaks a shared link.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- 🔐 **Authentication** — email/password (bcrypt) with session cookies, forgot/reset password flow
+- 🗺️ **Trips & Destinations** — full CRUD, trip lifecycle status (planned / ongoing / completed)
+- 📔 **Memories** — journal entries with categories, ratings, geolocation, and photo galleries (Cloudflare R2)
+- 💰 **Expenses & Budgets** — per-trip expense tracking with category breakdowns against a budget target
+- 🌍 **Public sharing** — one-click publish to a stable, frozen-slug public URL, independent from private editing views
+- ♿ **Accessibility-checked** — automated axe-core checks in both unit and e2e suites
+- ✅ **Tested** — Vitest unit tests + Playwright end-to-end coverage across trips, destinations, memories, expenses, and public routes
+
+## Tech Stack
+
+**Frontend**
+- [React 19](https://react.dev/) + [React Router v7](https://reactrouter.com/) (framework mode, server-side rendered)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/)
+- [Conform](https://conform.guide/) + [Zod](https://zod.dev/) for type-safe, progressively-enhanced forms
+- [Lucide](https://lucide.dev/) icons
+
+**Backend & Infrastructure**
+- [Cloudflare Workers](https://workers.cloudflare.com/) — edge runtime, SSR
+- [Cloudflare D1](https://developers.cloudflare.com/d1/) — SQLite at the edge, accessed via [Prisma ORM](https://www.prisma.io/)
+- [Cloudflare R2](https://developers.cloudflare.com/r2/) — object storage for trip/memory photos
+- Repository pattern for data access (`app/lib/repositories`) decoupling routes from persistence
+
+**Testing & Quality**
+- [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) for unit tests
+- [Playwright](https://playwright.dev/) for end-to-end tests
+- [axe-core](https://github.com/dequelabs/axe-core) / jest-axe for automated accessibility audits
+- ESLint + Prettier, strict TypeScript
+
+## Architecture
+
+The app runs as a single Cloudflare Worker (`workers/app.ts`) serving a server-rendered React Router application — no separate API layer. Routes live under `app/pages`, data access goes through typed repositories backed by Prisma against D1, and uploaded photos are streamed to R2 with only the resulting URL persisted in the database.
+
+Architectural decisions are recorded as lightweight ADRs in [`docs/adr`](docs/adr), and the project's domain vocabulary (Trip, Memory, Destination, Visibility, etc.) is documented in [`CONTEXT.md`](CONTEXT.md).
 
 ## Getting Started
 
+### Prerequisites
+- Node.js 18+
+- [pnpm](https://pnpm.io/) 10+
+- A [Cloudflare account](https://dash.cloudflare.com/) (for D1/R2 — local dev uses Wrangler's local emulation)
+
 ### Installation
 
-Install the dependencies:
+```bash
+pnpm install
+```
+
+### Local Database
 
 ```bash
-npm install
+pnpm db:migrate   # apply D1 migrations locally
+pnpm db:seed      # seed local data
 ```
 
 ### Development
 
-Start the development server with HMR:
-
 ```bash
-npm run dev
+pnpm dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+The app will be available at `http://localhost:5173`.
 
-## Building for Production
-
-Create a production build:
+### Testing
 
 ```bash
-npm run build
+pnpm test:unit       # Vitest unit tests
+pnpm test:e2e        # Playwright end-to-end tests
+pnpm check           # typecheck + lint + full test suite
 ```
 
 ## Deployment
 
-### Docker Deployment
-
-To build and run using Docker:
+Deployed on Cloudflare Workers with D1 and R2 bindings configured in `wrangler.toml`:
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+pnpm deploy:cloudflare
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+See [`CLOUDFLARE_DEPLOY.md`](CLOUDFLARE_DEPLOY.md) and [`docs/cloudflare-architecture.md`](docs/cloudflare-architecture.md) for the full deployment setup and architecture notes.
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
+## Project Structure
 
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+app/
+├── pages/            # Route components (auth, trips, profile, public)
+├── components/       # UI components (shadcn/ui + layout)
+├── lib/
+│   ├── repositories/  # Data access layer (Trip, Memory, Destination, Expense, ...)
+│   ├── schemas/       # Zod validation schemas
+│   └── auth.server.ts # Session/auth logic
+├── routes.ts          # Route configuration
+prisma/                # Prisma schema (D1/SQLite)
+d1/migrations/         # D1 SQL migrations
+docs/adr/               # Architectural decision records
+tests/
+├── unit/              # Vitest unit + accessibility tests
+└── e2e/               # Playwright end-to-end tests
 ```
 
-## Styling
+## Roadmap
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+Actively developed — see [`docs/roadmap.md`](docs/roadmap.md) for in-progress and planned work, including map visualization, a rich text editor, and AI-assisted journaling via MCP.
 
 ---
 
-Built with ❤️ using React Router.
+Built by [Alexis Rossi](https://github.com/RossiAlexis).
