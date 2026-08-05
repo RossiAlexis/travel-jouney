@@ -61,8 +61,8 @@ export default [
     route("trips/:tripId/expenses", "pages/trips/expenses.tsx"),
   ]),
 
-  // Public profile and trip views (Phase 2)
+  // Public profile and trip views
   // route(":username", "pages/public/user-profile.tsx"),
-  // route(":username/:tripSlug", "pages/public/trip-public.tsx"),
+  route(":username/:tripSlug", "pages/public/trip-public.tsx"),
   // route(":username/:tripSlug/:memorySlug", "pages/public/memory-public.tsx"),
 ] satisfies RouteConfig;

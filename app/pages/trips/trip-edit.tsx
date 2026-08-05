@@ -22,8 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Copy, Globe, Lock } from "lucide-react";
+import { useState } from "react";
 
 export function meta({ data }: Route.MetaArgs) {
   if (!data?.trip) {
@@ -48,7 +50,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     throw new Response("Trip not found", { status: 404 });
   }
 
-  return data({ trip });
+  return data({ trip, user });
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -64,7 +66,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     );
   }
 
-  // Verify ownership
   const existingTrip = await context.repos.trips.findByIdForUser(
     tripId,
     user.id
@@ -85,6 +86,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       status: submission.value.status,
       budget: submission.value.budget || null,
       currency: submission.value.currency || "USD",
+      isPublic: submission.value.isPublic,
     });
 
     return redirect(`/trips/${tripId}`);
@@ -133,9 +135,10 @@ export default function TripEdit({
   loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { trip } = loaderData;
+  const { trip, user } = loaderData;
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
+  const [copied, setCopied] = useState(false);
 
   const [form, fields] = useForm({
     lastResult: actionData?.submission,
@@ -152,8 +155,21 @@ export default function TripEdit({
       status: trip.status,
       budget: trip.budget?.toString() || "",
       currency: trip.currency,
+      isPublic: String(trip.isPublic),
     },
   });
+
+  const publicUrl = trip.slug
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/${user.username}/${trip.slug}`
+    : null;
+
+  function copyUrl() {
+    if (!publicUrl) return;
+    navigator.clipboard.writeText(publicUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -389,6 +405,66 @@ export default function TripEdit({
                     </p>
                   )}
                 </div>
+              </div>
+
+              {/* Visibility */}
+              <div className="rounded-lg border p-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      {trip.isPublic ? (
+                        <Globe className="text-primary h-4 w-4" />
+                      ) : (
+                        <Lock className="text-muted-foreground h-4 w-4" />
+                      )}
+                      <Label htmlFor={fields.isPublic.id} className="text-base">
+                        Public trip
+                      </Label>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      {trip.isPublic
+                        ? "Anyone with the link can view this trip."
+                        : "Only you can see this trip. Toggle to share it publicly."}
+                    </p>
+                  </div>
+                  <Switch
+                    id={fields.isPublic.id}
+                    name={fields.isPublic.name}
+                    defaultChecked={Boolean(trip.isPublic)}
+                  />
+                </div>
+
+                {publicUrl && (
+                  <div className="mt-4 space-y-1">
+                    <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+                      Public URL
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-muted flex-1 truncate rounded px-2 py-1 text-sm">
+                        {publicUrl}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={copyUrl}
+                        aria-label="Copy public URL"
+                      >
+                        <Copy className="h-3 w-3" />
+                        {copied ? "Copied!" : "Copy"}
+                      </Button>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      Slug is frozen — renaming the trip won't change the URL.
+                    </p>
+                  </div>
+                )}
+
+                {!publicUrl && (
+                  <p className="text-muted-foreground mt-3 text-xs">
+                    A permanent URL will be generated when you first publish.
+                  </p>
+                )}
               </div>
 
               {/* Actions */}
